@@ -21,12 +21,10 @@ export function CategoriesTable({ categories, allUnits, industryId, onRefresh }:
   const [selectedSubCategory, setSelectedSubCategory] = useState(null);
 
   const handleEditCategory = (category: any, subCategory: any) => {
-    // Only allow editing if user has full access
-    if (hasFullAccess()) {
-      setSelectedCategory(category);
-      setSelectedSubCategory(subCategory);
-      setShowEditDialog(true);
-    }
+    // Allow all users to open the dialog (for viewing), permission checks are inside the dialog
+    setSelectedCategory(category);
+    setSelectedSubCategory(subCategory);
+    setShowEditDialog(true);
   };
 
   const categoryEntries = Object.entries(categories || {});
@@ -82,7 +80,6 @@ export function CategoriesTable({ categories, allUnits, industryId, onRefresh }:
                       size="sm"
                       variant="outline"
                       onClick={() => handleEditCategory(category, subCategory)}
-                      disabled={!hasFullAccess()}
                     >
                       <Edit className="h-4 w-4" />
                     </Button>
@@ -100,17 +97,15 @@ export function CategoriesTable({ categories, allUnits, industryId, onRefresh }:
         )}
       </div>
 
-      {hasFullAccess() && (
-        <EditCategoryDialog
-          open={showEditDialog}
-          onOpenChange={setShowEditDialog}
-          category={selectedCategory}
-          subCategory={selectedSubCategory}
-          allUnits={allUnits}
-          industryId={industryId}
-          onSuccess={onRefresh}
-        />
-      )}
+      <EditCategoryDialog
+        open={showEditDialog}
+        onOpenChange={setShowEditDialog}
+        category={selectedCategory}
+        subCategory={selectedSubCategory}
+        allUnits={allUnits}
+        industryId={industryId}
+        onSuccess={onRefresh}
+      />
     </>
   );
 }

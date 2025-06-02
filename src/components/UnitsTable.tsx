@@ -1,4 +1,3 @@
-
 import { useState, useMemo } from 'react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
@@ -148,7 +147,6 @@ export function UnitsTable({ units, onEditUnit }: UnitsTableProps) {
                       size="sm"
                       variant="outline"
                       onClick={() => onEditUnit(unit)}
-                      disabled={!hasFullAccess()}
                     >
                       <Edit className="h-4 w-4" />
                     </Button>
