@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from 'react';
 import { useParams } from 'react-router-dom';
 import { SidebarTrigger } from '@/components/ui/sidebar';
@@ -31,7 +30,6 @@ import {
 import { PermissionsTable } from '@/components/PermissionsTable';
 import { UnitsMetaManager } from '@/components/UnitsMetaManager';
 import { DataValidationCard } from '@/components/DataValidationCard';
-import { logApiCall } from '@/utils/apiLogger';
 
 interface IndustryDetails {
     industryDetails: {
@@ -92,12 +90,6 @@ const IndustryDetails = () => {
             if (response.ok) {
                 const data = await response.json();
                 setIndustryData(data);
-
-                // Log the API call for fetching industry details
-                await logApiCall(apiEndpoint, {
-                    method: 'GET',
-                    targetIndustryId: industryId!,
-                });
             } else {
                 throw new Error('Failed to fetch industry details');
             }
