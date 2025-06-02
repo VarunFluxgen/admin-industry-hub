@@ -100,6 +100,12 @@ const CreateIndustry = () => {
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
+                    <div className='mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg'>
+                        <p className='text-sm text-blue-800'>
+                            <strong>Important Note:</strong> Once a customer is created, please save the details of created user. A default logo will automatically be added. Use account settings in dashboard to update the logo. Without Unit Mapping user will not be able to login to dashboard.
+                        </p>
+                    </div>
+                    
                     <form onSubmit={handleSubmit} className='space-y-4'>
                         <div className='space-y-2'>
                             <Label htmlFor='industryName'>Industry Name</Label>
@@ -123,6 +129,9 @@ const CreateIndustry = () => {
                                 placeholder='Enter username'
                                 required
                             />
+                            <p className='text-xs text-muted-foreground'>
+                                Username must be unique and at least 6 characters long and contain both uppercase and lowercase letters.
+                            </p>
                         </div>
 
                         <div className='space-y-2'>
@@ -130,12 +139,15 @@ const CreateIndustry = () => {
                             <Input
                                 id='password'
                                 name='password'
-                                type='password'
+                                type='text'
                                 value={formData.password}
                                 onChange={handleInputChange}
                                 placeholder='Enter password'
                                 required
                             />
+                            <p className='text-xs text-muted-foreground'>
+                                Password must be at least 6 characters long and contain both uppercase, lowercase letters, Number and a special character.
+                            </p>
                         </div>
 
                         <div className='flex gap-4 pt-4'>

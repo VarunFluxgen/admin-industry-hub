@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import {
     Dialog,
@@ -117,12 +116,11 @@ export function EditUnitDialog({
             });
 
             if (response.ok) {
-                // Log the API call for updating unit
+                // Log the API call for updating unit with full unit object
                 await logApiCall(apiEndpoint, {
                     method: 'PUT',
                     targetIndustryId: industryId,
-                    unitId: unit.unitId,
-                    unitName: formData.unitName,
+                    unitObject: unitModel,
                 });
 
                 toast({
