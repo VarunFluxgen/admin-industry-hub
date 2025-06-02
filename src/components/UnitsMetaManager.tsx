@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import {
     Card,
@@ -27,6 +28,7 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { Edit, Plus, Calendar, AlertCircle } from 'lucide-react';
+import { logApiCall } from '@/utils/apiLogger';
 
 interface Unit {
     unitId: string;
@@ -249,16 +251,24 @@ export function UnitsMetaManager({ industryId, units }: UnitsMetaManagerProps) {
                     : editingRecord.imageUrl,
             };
 
-            const response = await fetch(
-                'https://admin-aquagen-api-bfckdag2aydtegc2.southindia-01.azurewebsites.net/api/admin/units_meta/',
-                {
-                    method: 'POST',
-                    headers,
-                    body: formData,
-                }
-            );
+            const apiEndpoint = 'https://admin-aquagen-api-bfckdag2aydtegc2.southindia-01.azurewebsites.net/api/admin/units_meta/';
+
+            const response = await fetch(apiEndpoint, {
+                method: 'POST',
+                headers,
+                body: formData,
+            });
 
             if (response.ok) {
+                // Log the API call
+                await logApiCall(apiEndpoint, {
+                    method: 'POST',
+                    targetIndustryId: industryId,
+                    unitId: editingRecord.unitId,
+                    unitMetaData: editingRecord,
+                    hasImage: !!selectedImage,
+                });
+
                 toast({
                     title: 'Success',
                     description: 'Unit meta updated successfully!',
