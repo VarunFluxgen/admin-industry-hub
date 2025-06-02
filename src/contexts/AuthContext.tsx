@@ -1,10 +1,14 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { setCookie, getCookie, removeCookie, isTokenValid } from '@/utils/cookieUtils';
 
 interface User {
     username: string;
     industryId: string;
     token?: string;
+    permissions: string[];
+    email?: string;
+    userId?: string;
 }
 
 interface AuthContextType {
@@ -20,25 +24,48 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const [user, setUser] = useState<User | null>(null);
 
     useEffect(() => {
-        const adminUser = localStorage.getItem('adminUser');
-        if (adminUser) {
+        // Check for stored user data in cookies
+        const storedUser = getCookie('adminUser');
+        const storedToken = getCookie('authToken');
+        
+        if (storedUser && storedToken) {
             try {
-                const userData = JSON.parse(adminUser);
-                if (userData.industryId === 'ADMINAPP') {
-                    setUser(userData);
+                const userData = JSON.parse(storedUser);
+                
+                // Validate token
+                if (isTokenValid(storedToken) && userData.industryId === 'ADMINAPP') {
+                    setUser({
+                        ...userData,
+                        token: storedToken
+                    });
+                } else {
+                    // Token expired or invalid, logout
+                    logout();
                 }
             } catch (error) {
-                localStorage.removeItem('adminUser');
-                localStorage.removeItem('authToken');
+                console.error('Error parsing stored user data:', error);
+                logout();
             }
         }
     }, []);
 
     const logout = () => {
-        localStorage.removeItem('adminUser');
-        localStorage.removeItem('authToken');
+        removeCookie('adminUser');
+        removeCookie('authToken');
+        removeCookie('refreshToken');
         setUser(null);
         window.location.href = '/login';
+    };
+
+    const setUserAndStore = (userData: User | null) => {
+        if (userData) {
+            // Store in cookies
+            setCookie('adminUser', JSON.stringify(userData), 7);
+            if (userData.token) {
+                setCookie('authToken', userData.token, 7);
+            }
+        }
+        setUser(userData);
     };
 
     return (
@@ -46,7 +73,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             value={{ 
                 user, 
                 isAuthenticated: !!user,
-                setUser,
+                setUser: setUserAndStore,
                 logout 
             }}
         >
