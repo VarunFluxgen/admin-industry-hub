@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -25,7 +24,7 @@ const Login = () => {
 
         try {
             const response = await fetch(
-                'http://127.0.0.1:5001/api/admin/user/login?format=v1',
+                'https://admin-aquagen-api-bfckdag2aydtegc2.southindia-01.azurewebsites.net/api/admin/user/login?format=v1',
                 {
                     method: 'GET',
                     headers: {

@@ -20,7 +20,7 @@ export const logApiCall = async (apiEndpoint: string, requestData: Record<string
             json: requestData,
         };
 
-        await fetch('http://127.0.0.1:5001/api/admin/globallogs/adminapp', {
+        await fetch('https://admin-aquagen-api-bfckdag2aydtegc2.southindia-01.azurewebsites.net/api/admin/globallogs/adminapp', {
             method: 'POST',
             headers: {
                 'accept': 'application/json',
