@@ -5,6 +5,9 @@ interface User {
     username: string;
     industryId: string;
     token?: string;
+    permissions: string[];
+    email?: string;
+    userId?: string;
 }
 
 interface AuthContextType {
@@ -12,6 +15,8 @@ interface AuthContextType {
     isAuthenticated: boolean;
     setUser: (user: User | null) => void;
     logout: () => void;
+    hasFullAccess: () => boolean;
+    canOnlyViewAndUpdateUnitMeta: () => boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -21,13 +26,20 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
     useEffect(() => {
         const adminUser = localStorage.getItem('adminUser');
-        if (adminUser) {
+        const authToken = localStorage.getItem('authToken');
+        
+        if (adminUser && authToken) {
             try {
                 const userData = JSON.parse(adminUser);
                 if (userData.industryId === 'ADMINAPP') {
-                    setUser(userData);
+                    setUser({
+                        ...userData,
+                        token: authToken,
+                        permissions: userData.permissions || []
+                    });
                 }
             } catch (error) {
+                console.error('Error parsing stored user data:', error);
                 localStorage.removeItem('adminUser');
                 localStorage.removeItem('authToken');
             }
@@ -41,13 +53,27 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         window.location.href = '/login';
     };
 
+    const hasFullAccess = (): boolean => {
+        if (!user) return false;
+        return user.permissions.some(permission => 
+            permission === 'SUPER_USER' || permission === 'ADMIN'
+        );
+    };
+
+    const canOnlyViewAndUpdateUnitMeta = (): boolean => {
+        if (!user) return false;
+        return user.permissions.includes('USER') && !hasFullAccess();
+    };
+
     return (
         <AuthContext.Provider 
             value={{ 
                 user, 
                 isAuthenticated: !!user,
                 setUser,
-                logout 
+                logout,
+                hasFullAccess,
+                canOnlyViewAndUpdateUnitMeta
             }}
         >
             {children}

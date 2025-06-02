@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -42,11 +43,22 @@ const Login = () => {
                 
                 if (data.industryId === 'ADMINAPP') {
                     // Store user data in localStorage
-                    localStorage.setItem('adminUser', JSON.stringify(data));
+                    const userData = {
+                        username: data.username,
+                        industryId: data.industryId,
+                        email: data.email,
+                        userId: data.userId,
+                        permissions: data.permissions || []
+                    };
+                    
+                    localStorage.setItem('adminUser', JSON.stringify(userData));
                     localStorage.setItem('authToken', data.token || '');
                     
                     // Update auth context state immediately
-                    setUser(data);
+                    setUser({
+                        ...userData,
+                        token: data.token
+                    });
                     
                     toast({
                         title: 'Login Successful',
@@ -54,7 +66,6 @@ const Login = () => {
                     });
                     
                     console.log('Redirecting to dashboard...');
-                    // Use navigate instead of window.location for better state management
                     navigate('/', { replace: true });
                 } else {
                     toast({
