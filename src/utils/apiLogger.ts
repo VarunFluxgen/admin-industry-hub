@@ -1,4 +1,6 @@
 
+import { useAuth } from '@/contexts/AuthContext';
+
 interface LogData {
     userName: string;
     api: string;

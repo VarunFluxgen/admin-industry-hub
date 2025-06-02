@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import {
     Dialog,
@@ -17,6 +18,7 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
+import { logApiCall } from '@/utils/apiLogger';
 
 interface CreateCategoryDialogProps {
     open: boolean;
@@ -51,21 +53,28 @@ export function CreateCategoryDialog({
         setIsLoading(true);
 
         try {
-            const response = await fetch(
-                `https://admin-aquagen-api-bfckdag2aydtegc2.southindia-01.azurewebsites.net/api/admin/Category/?standardCategoryId=${formData.standardCategoryId}`,
-                {
-                    method: 'POST',
-                    headers: {
-                        accept: 'application/json',
-                        Authorization:
-                            'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJmcmVzaCI6dHJ1ZSwiaWF0IjoxNzM0MzI2NDU2LCJqdGkiOiI0NmFhOTRhNS00MDY3LTQ0OWEtOWUxYy1kYTU5MWZkMDZhYmIiLCJ0eXBlIjoiYWNjZXNzIiwic3ViIjoiSU5URVJOQUwiLCJuYmYiOjE3MzQzMjY0NTYsImV4cCI6MTc2NTg2MjQ1NiwidXNlcklkIjoiSU5URVJOQUxfREVGQVVMVF92YXJ1biIsImVtYWlsIjoidmFydW5AYXF1YWdlbi5jb20iLCJ1c2VybmFtZSI6InZhcnVuIiwibG9naW5UeXBlIjoiQURNSU5fREVGQVVMVCIsInJvbGUiOiJ1c2VyIiwicGVybWlzc2lvbnMiOlsiU1VQRVJfVVNFUiJdfQ.GsEQUEHCyvAHgvcUDbrZfIclUQqoB6Z61Q8IltLqjiA',
-                        targetIndustryId: industryId,
-                        categoryName: formData.categoryName,
-                    },
-                }
-            );
+            const apiEndpoint = `https://admin-aquagen-api-bfckdag2aydtegc2.southindia-01.azurewebsites.net/api/admin/Category/?standardCategoryId=${formData.standardCategoryId}`;
+            
+            const response = await fetch(apiEndpoint, {
+                method: 'POST',
+                headers: {
+                    accept: 'application/json',
+                    Authorization:
+                        'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJmcmVzaCI6dHJ1ZSwiaWF0IjoxNzM0MzI2NDU2LCJqdGkiOiI0NmFhOTRhNS00MDY3LTQ0OWEtOWUxYy1kYTU5MWZkMDZhYmIiLCJ0eXBlIjoiYWNjZXNzIiwic3ViIjoiSU5URVJOQUwiLCJuYmYiOjE3MzQzMjY0NTYsImV4cCI6MTc2NTg2MjQ1NiwidXNlcklkIjoiSU5URVJOQUxfREVGQVVMVF92YXJ1biIsImVtYWlsIjoidmFydW5AYXF1YWdlbi5jb20iLCJ1c2VybmFtZSI6InZhcnVuIiwibG9naW5UeXBlIjoiQURNSU5fREVGQVVMVCIsInJvbGUiOiJ1c2VyIiwicGVybWlzc2lvbnMiOlsiU1VQRVJfVVNFUiJdfQ.GsEQUEHCyvAHgvcUDbrZfIclUQqoB6Z61Q8IltLqjiA',
+                    targetIndustryId: industryId,
+                    categoryName: formData.categoryName,
+                },
+            });
 
             if (response.ok) {
+                // Log the API call
+                await logApiCall(apiEndpoint, {
+                    method: 'POST',
+                    targetIndustryId: industryId,
+                    categoryName: formData.categoryName,
+                    standardCategoryId: formData.standardCategoryId,
+                });
+
                 toast({
                     title: 'Success',
                     description: 'Category created successfully!',
