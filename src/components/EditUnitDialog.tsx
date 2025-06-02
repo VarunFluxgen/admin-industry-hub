@@ -392,7 +392,7 @@ export function EditUnitDialog({
                         >
                             {isReadOnly ? 'Close' : 'Cancel'}
                         </Button>
-                        {!isReadOnly && (
+                        {hasFullAccess() && (
                             <Button type='submit' disabled={isLoading}>
                                 {isLoading ? 'Updating...' : 'Update Unit'}
                             </Button>

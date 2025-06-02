@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import {
     Dialog,
@@ -12,6 +11,7 @@ import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
 import { logApiCall } from '@/utils/apiLogger';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface EditCategoryDialogProps {
     open: boolean;
@@ -32,6 +32,7 @@ export function EditCategoryDialog({
     industryId,
     onSuccess,
 }: EditCategoryDialogProps) {
+    const { hasFullAccess } = useAuth();
     const [isLoading, setIsLoading] = useState(false);
     const [selectedUnits, setSelectedUnits] = useState<string[]>([]);
     const { toast } = useToast();
@@ -52,7 +53,7 @@ export function EditCategoryDialog({
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!category || !subCategory) return;
+        if (!category || !subCategory || !hasFullAccess()) return;
 
         setIsLoading(true);
 
@@ -105,6 +106,8 @@ export function EditCategoryDialog({
     };
 
     const handleUnitToggle = (unitId: string, checked: boolean) => {
+        if (!hasFullAccess()) return;
+        
         if (checked) {
             setSelectedUnits((prev) => [...prev, unitId]);
         } else {
@@ -114,13 +117,15 @@ export function EditCategoryDialog({
 
     if (!category || !subCategory) return null;
 
+    const isReadOnly = !hasFullAccess();
+
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent className='sm:max-w-md max-h-[80vh] overflow-y-auto'>
                 <DialogHeader>
-                    <DialogTitle>Edit Category</DialogTitle>
+                    <DialogTitle>{isReadOnly ? 'View Category Details' : 'Edit Category'}</DialogTitle>
                     <DialogDescription>
-                        Manage units for {category.displayName} -{' '}
+                        {isReadOnly ? 'View category details for' : 'Manage units for'} {category.displayName} -{' '}
                         {subCategory.displayName}
                         {category.standardCategoryId === 'SOURCE_CATEGORY' && (
                             <div className='text-sm text-muted-foreground mt-1'>
@@ -144,7 +149,7 @@ export function EditCategoryDialog({
 
                         <div className='space-y-3'>
                             <Label className='text-sm font-medium'>
-                                Select Units:
+                                {isReadOnly ? 'Assigned Units:' : 'Select Units:'}
                             </Label>
                             {categoryUnits.length > 0 ? (
                                 <div className='space-y-2 max-h-40 overflow-y-auto'>
@@ -164,6 +169,7 @@ export function EditCategoryDialog({
                                                         checked as boolean
                                                     )
                                                 }
+                                                disabled={isReadOnly}
                                             />
                                             <Label
                                                 htmlFor={unit.unitId}
@@ -194,11 +200,13 @@ export function EditCategoryDialog({
                             variant='outline'
                             onClick={() => onOpenChange(false)}
                         >
-                            Cancel
+                            {isReadOnly ? 'Close' : 'Cancel'}
                         </Button>
-                        <Button type='submit' disabled={isLoading}>
-                            {isLoading ? 'Updating...' : 'Update Category'}
-                        </Button>
+                        {hasFullAccess() && (
+                            <Button type='submit' disabled={isLoading}>
+                                {isLoading ? 'Updating...' : 'Update Category'}
+                            </Button>
+                        )}
                     </div>
                 </form>
             </DialogContent>
