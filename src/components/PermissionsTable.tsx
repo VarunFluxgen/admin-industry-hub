@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import {
     Table,
@@ -20,6 +21,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { Edit, Users, Settings } from 'lucide-react';
+import { logApiCall } from '@/utils/apiLogger';
 
 interface User {
     id: string;
@@ -30,7 +32,7 @@ interface User {
     industryId: string;
     type: string;
     active: boolean;
-    permissions?: string[];
+    permissions?: string[] | string | null;
 }
 
 interface PermissionsTableProps {
@@ -93,9 +95,17 @@ export function PermissionsTable({ industryId }: PermissionsTableProps) {
         }
     };
 
+    const normalizePermissions = (permissions: string[] | string | null | undefined): string[] => {
+        if (!permissions) return [];
+        if (Array.isArray(permissions)) return permissions;
+        if (typeof permissions === 'string') return [permissions];
+        return [];
+    };
+
     const handleEditPermissions = (user: User) => {
         setSelectedUser(user);
-        setEditPermissions([...(user.permissions || [])]);
+        const userPermissions = normalizePermissions(user.permissions);
+        setEditPermissions([...userPermissions]);
         setShowEditDialog(true);
     };
 
@@ -115,20 +125,27 @@ export function PermissionsTable({ industryId }: PermissionsTableProps) {
             const permissionsQuery = editPermissions
                 .map((p) => `permissions=${p}`)
                 .join('&');
-            const response = await fetch(
-                `https://admin-aquagen-api-bfckdag2aydtegc2.southindia-01.azurewebsites.net/api/admin/user/?userId=${selectedUser.id}&${permissionsQuery}`,
-                {
-                    method: 'PUT',
-                    headers: {
-                        accept: 'application/json',
-                        Authorization:
-                            'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJmcmVzaCI6dHJ1ZSwiaWF0IjoxNzM0MzI2NDU2LCJqdGkiOiI0NmFhOTRhNS00MDY3LTQ0OWEtOWUxYy1kYTU5MWZkMDZhYmIiLCJ0eXBlIjoiYWNjZXNzIiwic3ViIjoiSU5URVJOQUwiLCJuYmYiOjE3MzQzMjY0NTYsImV4cCI6MTc2NTg2MjQ1NiwidXNlcklkIjoiSU5URVJOQUxfREVGQVVMVF92YXJ1biIsImVtYWlsIjoidmFydW5AYXF1YWdlbi5jb20iLCJ1c2VybmFtZSI6InZhcnVuIiwibG9naW5UeXBlIjoiQURNSU5fREVGQVVMVCIsInJvbGUiOiJ1c2VyIiwicGVybWlzc2lvbnMiOlsiU1VQRVJfVVNFUiJdfQ.GsEQUEHCyvAHgvcUDbrZfIclUQqoB6Z61Q8IltLqjiA',
-                        targetIndustryId: industryId,
-                    },
-                }
-            );
+            const apiEndpoint = `https://admin-aquagen-api-bfckdag2aydtegc2.southindia-01.azurewebsites.net/api/admin/user/?userId=${selectedUser.id}&${permissionsQuery}`;
+            
+            const response = await fetch(apiEndpoint, {
+                method: 'PUT',
+                headers: {
+                    accept: 'application/json',
+                    Authorization:
+                        'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJmcmVzaCI6dHJ1ZSwiaWF0IjoxNzM0MzI2NDU2LCJqdGkiOiI0NmFhOTRhNS00MDY3LTQ0OWEtOWUxYy1kYTU5MWZkMDZhYmIiLCJ0eXBlIjoiYWNjZXNzIiwic3ViIjoiSU5URVJOQUwiLCJuYmYiOjE3MzQzMjY0NTYsImV4cCI6MTc2NTg2MjQ1NiwidXNlcklkIjoiSU5URVJOQUxfREVGQVVMVF92YXJ1biIsImVtYWlsIjoidmFydW5AYXF1YWdlbi5jb20iLCJ1c2VybmFtZSI6InZhcnVuIiwibG9naW5UeXBlIjoiQURNSU5fREVGQVVMVCIsInJvbGUiOiJ1c2VyIiwicGVybWlzc2lvbnMiOlsiU1VQRVJfVVNFUiJdfQ.GsEQUEHCyvAHgvcUDbrZfIclUQqoB6Z61Q8IltLqjiA',
+                    targetIndustryId: industryId,
+                },
+            });
 
             if (response.ok) {
+                // Log the API call
+                await logApiCall(apiEndpoint, {
+                    userId: selectedUser.id,
+                    permissions: editPermissions,
+                    method: 'PUT',
+                    targetIndustryId: industryId
+                });
+
                 toast({
                     title: 'Success',
                     description: 'Permissions updated successfully!',
@@ -170,7 +187,7 @@ export function PermissionsTable({ industryId }: PermissionsTableProps) {
                     </TableHeader>
                     <TableBody>
                         {users.map((user) => {
-                            const userPermissions = user.permissions || [];
+                            const userPermissions = normalizePermissions(user.permissions);
                             return (
                                 <TableRow key={user.id}>
                                     <TableCell className='font-medium'>
