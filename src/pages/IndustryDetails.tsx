@@ -109,17 +109,9 @@ const IndustryDetails = () => {
     };
 
     const handleEditUnit = (unit: any) => {
-        // Only allow editing if user has full access
-        if (hasFullAccess()) {
-            setSelectedUnit(unit);
-            setShowEditUnit(true);
-        } else {
-            toast({
-                title: 'Access Restricted',
-                description: 'You do not have permission to edit units.',
-                variant: 'destructive',
-            });
-        }
+        // Allow viewing unit details for all users, but editing only for full access users
+        setSelectedUnit(unit);
+        setShowEditUnit(true);
     };
 
     const handleRefresh = () => {
@@ -286,7 +278,6 @@ const IndustryDetails = () => {
                     onClick={scrollToDataValidation}
                     variant='outline'
                     className='h-20 flex-col gap-2'
-                    disabled={canOnlyViewAndUpdateUnitMeta()}
                 >
                     <CheckCircle className='h-6 w-6' />
                     Data Validation
@@ -369,18 +360,16 @@ const IndustryDetails = () => {
                 </div>
             )}
 
-            {/* Data Validation Card - Only show for full access users */}
-            {hasFullAccess() && (
-                <div ref={dataValidationRef}>
-                    <DataValidationCard
-                        industryId={industryId!}
-                        units={industryDetails.units.map((unit) => ({
-                            unitId: unit.unitId,
-                            unitName: unit.unitName,
-                        }))}
-                    />
-                </div>
-            )}
+            {/* Data Validation Card - Show for all users */}
+            <div ref={dataValidationRef}>
+                <DataValidationCard
+                    industryId={industryId!}
+                    units={industryDetails.units.map((unit) => ({
+                        unitId: unit.unitId,
+                        unitName: unit.unitName,
+                    }))}
+                />
+            </div>
 
             {/* Units Meta Management - Always show */}
             <div ref={unitsMetaRef}>
@@ -393,7 +382,15 @@ const IndustryDetails = () => {
                 />
             </div>
 
-            {/* Dialogs - Only render for full access users */}
+            {/* Dialogs - Show edit unit dialog for all users, others only for full access */}
+            <EditUnitDialog
+                open={showEditUnit}
+                onOpenChange={setShowEditUnit}
+                unit={selectedUnit}
+                industryId={industryId!}
+                onSuccess={handleRefresh}
+            />
+
             {hasFullAccess() && (
                 <>
                     <CreateUnitDialog
@@ -406,14 +403,6 @@ const IndustryDetails = () => {
                     <CreateCategoryDialog
                         open={showCreateCategory}
                         onOpenChange={setShowCreateCategory}
-                        industryId={industryId!}
-                        onSuccess={handleRefresh}
-                    />
-
-                    <EditUnitDialog
-                        open={showEditUnit}
-                        onOpenChange={setShowEditUnit}
-                        unit={selectedUnit}
                         industryId={industryId!}
                         onSuccess={handleRefresh}
                     />

@@ -20,6 +20,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import { logApiCall } from '@/utils/apiLogger';
+import { useAuth } from '@/hooks/use-auth';
 
 interface EditUnitDialogProps {
     open: boolean;
@@ -36,6 +37,7 @@ export function EditUnitDialog({
     industryId,
     onSuccess,
 }: EditUnitDialogProps) {
+    const { hasFullAccess } = useAuth();
     const [isLoading, setIsLoading] = useState(false);
     const [formData, setFormData] = useState({
         unitName: '',
@@ -76,7 +78,7 @@ export function EditUnitDialog({
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!unit) return;
+        if (!unit || !hasFullAccess()) return;
 
         setIsLoading(true);
 
@@ -144,6 +146,8 @@ export function EditUnitDialog({
     };
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (!hasFullAccess()) return;
+        
         const { name, value, type } = e.target;
         setFormData((prev) => ({
             ...prev,
@@ -153,13 +157,15 @@ export function EditUnitDialog({
 
     if (!unit) return null;
 
+    const isReadOnly = !hasFullAccess();
+
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent className='sm:max-w-2xl max-h-[80vh] overflow-y-auto'>
                 <DialogHeader>
-                    <DialogTitle>Edit Unit</DialogTitle>
+                    <DialogTitle>{isReadOnly ? 'View Unit Details' : 'Edit Unit'}</DialogTitle>
                     <DialogDescription>
-                        Update the unit details below.
+                        {isReadOnly ? 'View the unit details below.' : 'Update the unit details below.'}
                     </DialogDescription>
                 </DialogHeader>
 
@@ -174,7 +180,7 @@ export function EditUnitDialog({
                         <TabsContent value='basic' className='space-y-4'>
                             <div className='grid grid-cols-2 gap-4'>
                                 <div className='space-y-2'>
-                                    <Label htmlFor='unitId'>Unit ID (Read Only)</Label>
+                                    <Label htmlFor='unitId'>Unit ID</Label>
                                     <Input
                                         id='unitId'
                                         value={unit.unitId}
@@ -190,7 +196,9 @@ export function EditUnitDialog({
                                         value={formData.unitName}
                                         onChange={handleInputChange}
                                         placeholder='Enter unit name'
-                                        required
+                                        disabled={isReadOnly}
+                                        className={isReadOnly ? 'bg-gray-100' : ''}
+                                        required={!isReadOnly}
                                     />
                                 </div>
                             </div>
@@ -203,6 +211,8 @@ export function EditUnitDialog({
                                         value={formData.deviceId}
                                         onChange={handleInputChange}
                                         placeholder='Enter device ID'
+                                        disabled={isReadOnly}
+                                        className={isReadOnly ? 'bg-gray-100' : ''}
                                     />
                                 </div>
                                 <div className='space-y-2'>
@@ -214,6 +224,8 @@ export function EditUnitDialog({
                                         value={formData.flowFactor}
                                         onChange={handleInputChange}
                                         min='0'
+                                        disabled={isReadOnly}
+                                        className={isReadOnly ? 'bg-gray-100' : ''}
                                     />
                                 </div>
                             </div>
@@ -226,6 +238,8 @@ export function EditUnitDialog({
                                     value={formData.unitThreshold}
                                     onChange={handleInputChange}
                                     min='0'
+                                    disabled={isReadOnly}
+                                    className={isReadOnly ? 'bg-gray-100' : ''}
                                 />
                             </div>
                         </TabsContent>
@@ -240,6 +254,8 @@ export function EditUnitDialog({
                                         value={formData.iothubdeviceId}
                                         onChange={handleInputChange}
                                         placeholder='Enter IoT Hub Device ID'
+                                        disabled={isReadOnly}
+                                        className={isReadOnly ? 'bg-gray-100' : ''}
                                     />
                                 </div>
                                 <div className='space-y-2'>
@@ -247,13 +263,14 @@ export function EditUnitDialog({
                                     <Select
                                         value={formData.iothubdeviceType}
                                         onValueChange={(value) =>
-                                            setFormData((prev) => ({
+                                            !isReadOnly && setFormData((prev) => ({
                                                 ...prev,
                                                 iothubdeviceType: value,
                                             }))
                                         }
+                                        disabled={isReadOnly}
                                     >
-                                        <SelectTrigger>
+                                        <SelectTrigger className={isReadOnly ? 'bg-gray-100' : ''}>
                                             <SelectValue placeholder='Select device type' />
                                         </SelectTrigger>
                                         <SelectContent>
@@ -276,6 +293,8 @@ export function EditUnitDialog({
                                         value={formData.slaveId}
                                         onChange={handleInputChange}
                                         min='0'
+                                        disabled={isReadOnly}
+                                        className={isReadOnly ? 'bg-gray-100' : ''}
                                     />
                                 </div>
                                 <div className='space-y-2'>
@@ -283,13 +302,14 @@ export function EditUnitDialog({
                                     <Select
                                         value={formData.metertype}
                                         onValueChange={(value) =>
-                                            setFormData((prev) => ({
+                                            !isReadOnly && setFormData((prev) => ({
                                                 ...prev,
                                                 metertype: value,
                                             }))
                                         }
+                                        disabled={isReadOnly}
                                     >
-                                        <SelectTrigger>
+                                        <SelectTrigger className={isReadOnly ? 'bg-gray-100' : ''}>
                                             <SelectValue placeholder='Select meter type' />
                                         </SelectTrigger>
                                         <SelectContent>
@@ -308,6 +328,8 @@ export function EditUnitDialog({
                                     value={formData.streamId}
                                     onChange={handleInputChange}
                                     placeholder='Enter stream ID'
+                                    disabled={isReadOnly}
+                                    className={isReadOnly ? 'bg-gray-100' : ''}
                                 />
                             </div>
                         </TabsContent>
@@ -319,11 +341,12 @@ export function EditUnitDialog({
                                         id='isDeployed'
                                         checked={formData.isDeployed}
                                         onCheckedChange={(checked) =>
-                                            setFormData((prev) => ({
+                                            !isReadOnly && setFormData((prev) => ({
                                                 ...prev,
                                                 isDeployed: checked as boolean,
                                             }))
                                         }
+                                        disabled={isReadOnly}
                                     />
                                     <Label htmlFor='isDeployed'>Is Deployed</Label>
                                 </div>
@@ -332,11 +355,12 @@ export function EditUnitDialog({
                                         id='alertEnabled'
                                         checked={formData.alertEnabled}
                                         onCheckedChange={(checked) =>
-                                            setFormData((prev) => ({
+                                            !isReadOnly && setFormData((prev) => ({
                                                 ...prev,
                                                 alertEnabled: checked as boolean,
                                             }))
                                         }
+                                        disabled={isReadOnly}
                                     />
                                     <Label htmlFor='alertEnabled'>Alert Enabled</Label>
                                 </div>
@@ -345,11 +369,12 @@ export function EditUnitDialog({
                                         id='interpoaltionDisabled'
                                         checked={formData.interpoaltionDisabled}
                                         onCheckedChange={(checked) =>
-                                            setFormData((prev) => ({
+                                            !isReadOnly && setFormData((prev) => ({
                                                 ...prev,
                                                 interpoaltionDisabled: checked as boolean,
                                             }))
                                         }
+                                        disabled={isReadOnly}
                                     />
                                     <Label htmlFor='interpoaltionDisabled'>
                                         Interpolation Disabled
@@ -365,11 +390,13 @@ export function EditUnitDialog({
                             variant='outline'
                             onClick={() => onOpenChange(false)}
                         >
-                            Cancel
+                            {isReadOnly ? 'Close' : 'Cancel'}
                         </Button>
-                        <Button type='submit' disabled={isLoading}>
-                            {isLoading ? 'Updating...' : 'Update Unit'}
-                        </Button>
+                        {!isReadOnly && (
+                            <Button type='submit' disabled={isLoading}>
+                                {isLoading ? 'Updating...' : 'Update Unit'}
+                            </Button>
+                        )}
                     </div>
                 </form>
             </DialogContent>

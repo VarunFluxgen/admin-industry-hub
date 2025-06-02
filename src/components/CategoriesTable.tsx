@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Edit, Folder } from "lucide-react";
 import { EditCategoryDialog } from "./EditCategoryDialog";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface CategoriesTableProps {
   categories: any;
@@ -14,14 +15,18 @@ interface CategoriesTableProps {
 }
 
 export function CategoriesTable({ categories, allUnits, industryId, onRefresh }: CategoriesTableProps) {
+  const { hasFullAccess } = useAuth();
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [selectedSubCategory, setSelectedSubCategory] = useState(null);
 
   const handleEditCategory = (category: any, subCategory: any) => {
-    setSelectedCategory(category);
-    setSelectedSubCategory(subCategory);
-    setShowEditDialog(true);
+    // Only allow editing if user has full access
+    if (hasFullAccess()) {
+      setSelectedCategory(category);
+      setSelectedSubCategory(subCategory);
+      setShowEditDialog(true);
+    }
   };
 
   const categoryEntries = Object.entries(categories || {});
@@ -77,6 +82,7 @@ export function CategoriesTable({ categories, allUnits, industryId, onRefresh }:
                       size="sm"
                       variant="outline"
                       onClick={() => handleEditCategory(category, subCategory)}
+                      disabled={!hasFullAccess()}
                     >
                       <Edit className="h-4 w-4" />
                     </Button>
@@ -94,15 +100,17 @@ export function CategoriesTable({ categories, allUnits, industryId, onRefresh }:
         )}
       </div>
 
-      <EditCategoryDialog
-        open={showEditDialog}
-        onOpenChange={setShowEditDialog}
-        category={selectedCategory}
-        subCategory={selectedSubCategory}
-        allUnits={allUnits}
-        industryId={industryId}
-        onSuccess={onRefresh}
-      />
+      {hasFullAccess() && (
+        <EditCategoryDialog
+          open={showEditDialog}
+          onOpenChange={setShowEditDialog}
+          category={selectedCategory}
+          subCategory={selectedSubCategory}
+          allUnits={allUnits}
+          industryId={industryId}
+          onSuccess={onRefresh}
+        />
+      )}
     </>
   );
 }
