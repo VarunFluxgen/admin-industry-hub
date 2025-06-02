@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -43,11 +42,6 @@ const Login = () => {
                 console.log('Login response:', data);
                 
                 if (data.industryId === 'ADMINAPP') {
-                    // Store refresh token separately
-                    if (data.refreshToken) {
-                        setCookie('refreshToken', data.refreshToken, 30); // Store for 30 days
-                    }
-                    
                     const userData = {
                         username: data.username,
                         industryId: data.industryId,
@@ -57,7 +51,6 @@ const Login = () => {
                         userId: data.userId
                     };
                     
-                    // Update auth context state
                     setUser(userData);
                     
                     toast({
