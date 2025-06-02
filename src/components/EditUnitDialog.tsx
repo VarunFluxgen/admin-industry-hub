@@ -18,6 +18,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import { logApiCall } from '@/utils/apiLogger';
 
@@ -44,6 +45,16 @@ export function EditUnitDialog({
         flowFactor: 1,
         deviceId: '',
         isDeployed: false,
+        // IoT Hub settings
+        iotHubConnectionString: '',
+        deviceConnectionString: '',
+        primaryKey: '',
+        secondaryKey: '',
+        // Additional settings
+        autoSync: false,
+        dataRetentionDays: 30,
+        alertThreshold: 0,
+        maintenanceMode: false,
     });
     const { toast } = useToast();
 
@@ -56,6 +67,14 @@ export function EditUnitDialog({
                 flowFactor: unit.flowFactor || 1,
                 deviceId: unit.deviceId || '',
                 isDeployed: unit.isDeployed || false,
+                iotHubConnectionString: unit.iotHubConnectionString || '',
+                deviceConnectionString: unit.deviceConnectionString || '',
+                primaryKey: unit.primaryKey || '',
+                secondaryKey: unit.secondaryKey || '',
+                autoSync: unit.autoSync || false,
+                dataRetentionDays: unit.dataRetentionDays || 30,
+                alertThreshold: unit.alertThreshold || 0,
+                maintenanceMode: unit.maintenanceMode || false,
             });
         }
     }, [unit]);
@@ -129,7 +148,7 @@ export function EditUnitDialog({
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className='sm:max-w-md'>
+            <DialogContent className='sm:max-w-2xl max-h-[90vh] overflow-y-auto'>
                 <DialogHeader>
                     <DialogTitle>Edit Unit</DialogTitle>
                     <DialogDescription>
@@ -137,105 +156,218 @@ export function EditUnitDialog({
                     </DialogDescription>
                 </DialogHeader>
 
-                <form onSubmit={handleSubmit} className='space-y-4'>
-                    <div className='space-y-2'>
-                        <Label htmlFor='unitName'>Unit Name</Label>
-                        <Input
-                            id='unitName'
-                            name='unitName'
-                            value={formData.unitName}
-                            onChange={handleInputChange}
-                            placeholder='Enter unit name'
-                            required
-                        />
-                    </div>
+                <Tabs defaultValue="basic" className="w-full">
+                    <TabsList className="grid w-full grid-cols-3">
+                        <TabsTrigger value="basic">Basic</TabsTrigger>
+                        <TabsTrigger value="iot-hub">IoT Hub</TabsTrigger>
+                        <TabsTrigger value="settings">Settings</TabsTrigger>
+                    </TabsList>
 
-                    <div className='space-y-2'>
-                        <Label htmlFor='unitType'>Unit Type</Label>
-                        <Select
-                            value={formData.unitType}
-                            onValueChange={(value) =>
-                                setFormData((prev) => ({
-                                    ...prev,
-                                    unitType: value,
-                                }))
-                            }
-                        >
-                            <SelectTrigger>
-                                <SelectValue placeholder='Select unit type' />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value='RO'>RO</SelectItem>
-                                <SelectItem value='UF'>UF</SelectItem>
-                                <SelectItem value='NF'>NF</SelectItem>
-                                <SelectItem value='MF'>MF</SelectItem>
-                                <SelectItem value='OTHER'>Other</SelectItem>
-                            </SelectContent>
-                        </Select>
-                    </div>
+                    <form onSubmit={handleSubmit}>
+                        <TabsContent value="basic" className="space-y-4 mt-4">
+                            <div className='space-y-2'>
+                                <Label htmlFor='unitName'>Unit Name</Label>
+                                <Input
+                                    id='unitName'
+                                    name='unitName'
+                                    value={formData.unitName}
+                                    onChange={handleInputChange}
+                                    placeholder='Enter unit name'
+                                    required
+                                />
+                            </div>
 
-                    <div className='space-y-2'>
-                        <Label htmlFor='standardCategoryId'>Category</Label>
-                        <Input
-                            id='standardCategoryId'
-                            name='standardCategoryId'
-                            value={formData.standardCategoryId}
-                            onChange={handleInputChange}
-                            placeholder='Enter category ID'
-                        />
-                    </div>
+                            <div className='space-y-2'>
+                                <Label htmlFor='unitType'>Unit Type</Label>
+                                <Select
+                                    value={formData.unitType}
+                                    onValueChange={(value) =>
+                                        setFormData((prev) => ({
+                                            ...prev,
+                                            unitType: value,
+                                        }))
+                                    }
+                                >
+                                    <SelectTrigger>
+                                        <SelectValue placeholder='Select unit type' />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value='RO'>RO</SelectItem>
+                                        <SelectItem value='UF'>UF</SelectItem>
+                                        <SelectItem value='NF'>NF</SelectItem>
+                                        <SelectItem value='MF'>MF</SelectItem>
+                                        <SelectItem value='OTHER'>Other</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
 
-                    <div className='space-y-2'>
-                        <Label htmlFor='flowFactor'>Flow Factor</Label>
-                        <Input
-                            id='flowFactor'
-                            name='flowFactor'
-                            type='number'
-                            step='0.01'
-                            value={formData.flowFactor}
-                            onChange={handleInputChange}
-                            placeholder='Enter flow factor'
-                        />
-                    </div>
+                            <div className='space-y-2'>
+                                <Label htmlFor='standardCategoryId'>Category</Label>
+                                <Input
+                                    id='standardCategoryId'
+                                    name='standardCategoryId'
+                                    value={formData.standardCategoryId}
+                                    onChange={handleInputChange}
+                                    placeholder='Enter category ID'
+                                />
+                            </div>
 
-                    <div className='space-y-2'>
-                        <Label htmlFor='deviceId'>Device ID</Label>
-                        <Input
-                            id='deviceId'
-                            name='deviceId'
-                            value={formData.deviceId}
-                            onChange={handleInputChange}
-                            placeholder='Enter device ID'
-                        />
-                    </div>
+                            <div className='space-y-2'>
+                                <Label htmlFor='flowFactor'>Flow Factor</Label>
+                                <Input
+                                    id='flowFactor'
+                                    name='flowFactor'
+                                    type='number'
+                                    step='0.01'
+                                    value={formData.flowFactor}
+                                    onChange={handleInputChange}
+                                    placeholder='Enter flow factor'
+                                />
+                            </div>
 
-                    <div className='flex items-center space-x-2'>
-                        <Checkbox
-                            id='isDeployed'
-                            checked={formData.isDeployed}
-                            onCheckedChange={(checked) =>
-                                setFormData((prev) => ({
-                                    ...prev,
-                                    isDeployed: checked as boolean,
-                                }))
-                            }
-                        />
-                        <Label htmlFor='isDeployed'>Is Deployed</Label>
-                    </div>
+                            <div className='flex items-center space-x-2'>
+                                <Checkbox
+                                    id='isDeployed'
+                                    checked={formData.isDeployed}
+                                    onCheckedChange={(checked) =>
+                                        setFormData((prev) => ({
+                                            ...prev,
+                                            isDeployed: checked as boolean,
+                                        }))
+                                    }
+                                />
+                                <Label htmlFor='isDeployed'>Is Deployed</Label>
+                            </div>
+                        </TabsContent>
 
-                    <div className='flex justify-end gap-3 pt-4'>
-                        <Button
-                            type='button'
-                            variant='outline'
-                            onClick={() => onOpenChange(false)}
-                        >
-                            Cancel
-                        </Button>
-                        <Button type='submit' disabled={isLoading}>
-                            {isLoading ? 'Updating...' : 'Update Unit'}
-                        </Button>
-                    </div>
-                </form>
+                        <TabsContent value="iot-hub" className="space-y-4 mt-4">
+                            <div className='space-y-2'>
+                                <Label htmlFor='deviceId'>Device ID</Label>
+                                <Input
+                                    id='deviceId'
+                                    name='deviceId'
+                                    value={formData.deviceId}
+                                    onChange={handleInputChange}
+                                    placeholder='Enter device ID'
+                                />
+                            </div>
+
+                            <div className='space-y-2'>
+                                <Label htmlFor='iotHubConnectionString'>IoT Hub Connection String</Label>
+                                <Input
+                                    id='iotHubConnectionString'
+                                    name='iotHubConnectionString'
+                                    value={formData.iotHubConnectionString}
+                                    onChange={handleInputChange}
+                                    placeholder='Enter IoT Hub connection string'
+                                />
+                            </div>
+
+                            <div className='space-y-2'>
+                                <Label htmlFor='deviceConnectionString'>Device Connection String</Label>
+                                <Input
+                                    id='deviceConnectionString'
+                                    name='deviceConnectionString'
+                                    value={formData.deviceConnectionString}
+                                    onChange={handleInputChange}
+                                    placeholder='Enter device connection string'
+                                />
+                            </div>
+
+                            <div className='space-y-2'>
+                                <Label htmlFor='primaryKey'>Primary Key</Label>
+                                <Input
+                                    id='primaryKey'
+                                    name='primaryKey'
+                                    type='password'
+                                    value={formData.primaryKey}
+                                    onChange={handleInputChange}
+                                    placeholder='Enter primary key'
+                                />
+                            </div>
+
+                            <div className='space-y-2'>
+                                <Label htmlFor='secondaryKey'>Secondary Key</Label>
+                                <Input
+                                    id='secondaryKey'
+                                    name='secondaryKey'
+                                    type='password'
+                                    value={formData.secondaryKey}
+                                    onChange={handleInputChange}
+                                    placeholder='Enter secondary key'
+                                />
+                            </div>
+                        </TabsContent>
+
+                        <TabsContent value="settings" className="space-y-4 mt-4">
+                            <div className='flex items-center space-x-2'>
+                                <Checkbox
+                                    id='autoSync'
+                                    checked={formData.autoSync}
+                                    onCheckedChange={(checked) =>
+                                        setFormData((prev) => ({
+                                            ...prev,
+                                            autoSync: checked as boolean,
+                                        }))
+                                    }
+                                />
+                                <Label htmlFor='autoSync'>Auto Sync</Label>
+                            </div>
+
+                            <div className='space-y-2'>
+                                <Label htmlFor='dataRetentionDays'>Data Retention (Days)</Label>
+                                <Input
+                                    id='dataRetentionDays'
+                                    name='dataRetentionDays'
+                                    type='number'
+                                    value={formData.dataRetentionDays}
+                                    onChange={handleInputChange}
+                                    placeholder='Enter data retention days'
+                                />
+                            </div>
+
+                            <div className='space-y-2'>
+                                <Label htmlFor='alertThreshold'>Alert Threshold</Label>
+                                <Input
+                                    id='alertThreshold'
+                                    name='alertThreshold'
+                                    type='number'
+                                    step='0.01'
+                                    value={formData.alertThreshold}
+                                    onChange={handleInputChange}
+                                    placeholder='Enter alert threshold'
+                                />
+                            </div>
+
+                            <div className='flex items-center space-x-2'>
+                                <Checkbox
+                                    id='maintenanceMode'
+                                    checked={formData.maintenanceMode}
+                                    onCheckedChange={(checked) =>
+                                        setFormData((prev) => ({
+                                            ...prev,
+                                            maintenanceMode: checked as boolean,
+                                        }))
+                                    }
+                                />
+                                <Label htmlFor='maintenanceMode'>Maintenance Mode</Label>
+                            </div>
+                        </TabsContent>
+
+                        <div className='flex justify-end gap-3 pt-6 border-t'>
+                            <Button
+                                type='button'
+                                variant='outline'
+                                onClick={() => onOpenChange(false)}
+                            >
+                                Cancel
+                            </Button>
+                            <Button type='submit' disabled={isLoading}>
+                                {isLoading ? 'Updating...' : 'Update Unit'}
+                            </Button>
+                        </div>
+                    </form>
+                </Tabs>
             </DialogContent>
         </Dialog>
     );
