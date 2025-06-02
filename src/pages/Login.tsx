@@ -7,7 +7,6 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { Building2 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
-import { setCookie } from '@/utils/cookieUtils';
 
 const Login = () => {
     const [credentials, setCredentials] = useState({
@@ -42,16 +41,12 @@ const Login = () => {
                 console.log('Login response:', data);
                 
                 if (data.industryId === 'ADMINAPP') {
-                    const userData = {
-                        username: data.username,
-                        industryId: data.industryId,
-                        token: data.token,
-                        permissions: data.permissions || [],
-                        email: data.email,
-                        userId: data.userId
-                    };
+                    // Store user data in localStorage
+                    localStorage.setItem('adminUser', JSON.stringify(data));
+                    localStorage.setItem('authToken', data.token || '');
                     
-                    setUser(userData);
+                    // Update auth context state immediately
+                    setUser(data);
                     
                     toast({
                         title: 'Login Successful',
@@ -59,6 +54,7 @@ const Login = () => {
                     });
                     
                     console.log('Redirecting to dashboard...');
+                    // Use navigate instead of window.location for better state management
                     navigate('/', { replace: true });
                 } else {
                     toast({

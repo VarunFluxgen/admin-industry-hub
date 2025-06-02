@@ -4,14 +4,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Building2, Factory, Wifi, Zap } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { useAuth } from "@/contexts/AuthContext";
-import { isAdmin, canEditAll } from "@/utils/permissionUtils";
 
 const Dashboard = () => {
-  const { user } = useAuth();
-  const userIsAdmin = user ? isAdmin(user.permissions) : false;
-  const canEdit = user ? canEditAll(user.permissions) : false;
-
   const stats = [
     {
       title: "Industries",
@@ -24,13 +18,12 @@ const Dashboard = () => {
     },
     {
       title: "Create Industry",
-      value: canEdit ? "Add New" : "View Only",
-      description: canEdit ? "Create new industry" : "View existing industries",
+      value: "Add New",
+      description: "Create new industry",
       icon: Factory,
       color: "text-green-600",
       bgColor: "bg-green-50",
-      link: canEdit ? "/industries/create" : "/industries",
-      disabled: !canEdit,
+      link: "/industries/create",
     },
     {
       title: "Offline Devices",
@@ -62,11 +55,6 @@ const Dashboard = () => {
           <h2 className="text-3xl font-bold tracking-tight">Dashboard</h2>
           <p className="text-muted-foreground">
             Welcome to your admin dashboard
-            {user && (
-              <span className="ml-2 text-sm">
-                ({userIsAdmin ? 'Full Access' : 'Limited Access'})
-              </span>
-            )}
           </p>
         </div>
       </div>

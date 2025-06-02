@@ -5,9 +5,6 @@ interface User {
     username: string;
     industryId: string;
     token?: string;
-    permissions: string[];
-    email?: string;
-    userId?: string;
 }
 
 interface AuthContextType {
@@ -22,7 +19,24 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const [user, setUser] = useState<User | null>(null);
 
+    useEffect(() => {
+        const adminUser = localStorage.getItem('adminUser');
+        if (adminUser) {
+            try {
+                const userData = JSON.parse(adminUser);
+                if (userData.industryId === 'ADMINAPP') {
+                    setUser(userData);
+                }
+            } catch (error) {
+                localStorage.removeItem('adminUser');
+                localStorage.removeItem('authToken');
+            }
+        }
+    }, []);
+
     const logout = () => {
+        localStorage.removeItem('adminUser');
+        localStorage.removeItem('authToken');
         setUser(null);
         window.location.href = '/login';
     };
