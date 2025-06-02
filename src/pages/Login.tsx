@@ -37,6 +37,7 @@ const Login = () => {
 
             if (response.ok) {
                 const data = await response.json();
+                console.log('Login response:', data);
                 
                 if (data.industryId === 'ADMINAPP') {
                     // Store user data in localStorage
@@ -48,7 +49,9 @@ const Login = () => {
                         description: 'Welcome to Admin Panel',
                     });
                     
-                    navigate('/');
+                    console.log('Redirecting to dashboard...');
+                    // Force redirect to dashboard
+                    window.location.href = '/';
                 } else {
                     toast({
                         title: 'Access Denied',
@@ -60,6 +63,7 @@ const Login = () => {
                 throw new Error('Invalid credentials');
             }
         } catch (error) {
+            console.error('Login error:', error);
             toast({
                 title: 'Login Failed',
                 description: 'Invalid username or password. Please try again.',
