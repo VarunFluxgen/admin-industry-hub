@@ -4,8 +4,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Building2, Factory, Wifi, Zap } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/contexts/AuthContext";
 
 const Dashboard = () => {
+  const { hasFullAccess } = useAuth();
+
   const stats = [
     {
       title: "Industries",
@@ -24,6 +27,7 @@ const Dashboard = () => {
       color: "text-green-600",
       bgColor: "bg-green-50",
       link: "/industries/create",
+      requiresFullAccess: true,
     },
     {
       title: "Offline Devices",
@@ -47,6 +51,13 @@ const Dashboard = () => {
     },
   ];
 
+  const filteredStats = stats.filter(stat => {
+    if (stat.requiresFullAccess && !hasFullAccess()) {
+      return false;
+    }
+    return true;
+  });
+
   return (
     <div className="flex-1 space-y-4 p-8 pt-6">
       <div className="flex items-center gap-4">
@@ -60,7 +71,7 @@ const Dashboard = () => {
       </div>
       
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        {stats.map((stat, index) => (
+        {filteredStats.map((stat, index) => (
           <Card key={index} className={`transition-shadow ${stat.disabled ? 'opacity-60' : 'hover:shadow-lg cursor-pointer'}`}>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">

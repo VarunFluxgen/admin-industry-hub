@@ -1,10 +1,15 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { setCookie, getCookie, removeCookie, isTokenValid } from '@/utils/cookieUtils';
 
 interface User {
     username: string;
     industryId: string;
     token?: string;
+    refreshToken?: string;
+    permissions: string[];
+    email: string;
+    userId: string;
 }
 
 interface AuthContextType {
@@ -12,6 +17,9 @@ interface AuthContextType {
     isAuthenticated: boolean;
     setUser: (user: User | null) => void;
     logout: () => void;
+    hasFullAccess: () => boolean;
+    canOnlyView: () => boolean;
+    canEditUnitMeta: () => boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -20,25 +28,51 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const [user, setUser] = useState<User | null>(null);
 
     useEffect(() => {
-        const adminUser = localStorage.getItem('adminUser');
-        if (adminUser) {
+        const token = getCookie('authToken');
+        const userData = getCookie('adminUser');
+        
+        if (token && userData && isTokenValid(token)) {
             try {
-                const userData = JSON.parse(adminUser);
-                if (userData.industryId === 'ADMINAPP') {
-                    setUser(userData);
+                const parsedUser = JSON.parse(userData);
+                if (parsedUser.industryId === 'ADMINAPP') {
+                    setUser({
+                        ...parsedUser,
+                        token,
+                        permissions: parsedUser.permissions || []
+                    });
+                } else {
+                    logout();
                 }
             } catch (error) {
-                localStorage.removeItem('adminUser');
-                localStorage.removeItem('authToken');
+                console.error('Error parsing user data:', error);
+                logout();
             }
+        } else {
+            logout();
         }
     }, []);
 
     const logout = () => {
-        localStorage.removeItem('adminUser');
-        localStorage.removeItem('authToken');
+        removeCookie('adminUser');
+        removeCookie('authToken');
+        removeCookie('refreshToken');
         setUser(null);
         window.location.href = '/login';
+    };
+
+    const hasFullAccess = (): boolean => {
+        if (!user) return false;
+        return user.permissions.includes('SUPER_USER') || user.permissions.includes('ADMIN');
+    };
+
+    const canOnlyView = (): boolean => {
+        if (!user) return false;
+        return user.permissions.includes('USER') && !hasFullAccess();
+    };
+
+    const canEditUnitMeta = (): boolean => {
+        if (!user) return false;
+        return user.permissions.includes('USER') || hasFullAccess();
     };
 
     return (
@@ -47,7 +81,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                 user, 
                 isAuthenticated: !!user,
                 setUser,
-                logout 
+                logout,
+                hasFullAccess,
+                canOnlyView,
+                canEditUnitMeta
             }}
         >
             {children}
