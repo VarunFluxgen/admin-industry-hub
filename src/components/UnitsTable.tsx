@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Edit, Search, ArrowUpDown } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface Unit {
   unitId: string;
@@ -23,6 +24,7 @@ interface UnitsTableProps {
 }
 
 export function UnitsTable({ units, onEditUnit }: UnitsTableProps) {
+  const { hasFullAccess } = useAuth();
   const [searchTerm, setSearchTerm] = useState('');
   const [sortField, setSortField] = useState<keyof Unit>('unitName');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
@@ -146,6 +148,7 @@ export function UnitsTable({ units, onEditUnit }: UnitsTableProps) {
                       size="sm"
                       variant="outline"
                       onClick={() => onEditUnit(unit)}
+                      disabled={!hasFullAccess()}
                     >
                       <Edit className="h-4 w-4" />
                     </Button>

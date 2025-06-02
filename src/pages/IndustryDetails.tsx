@@ -30,6 +30,7 @@ import {
 import { PermissionsTable } from '@/components/PermissionsTable';
 import { UnitsMetaManager } from '@/components/UnitsMetaManager';
 import { DataValidationCard } from '@/components/DataValidationCard';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface IndustryDetails {
     industryDetails: {
@@ -52,6 +53,7 @@ interface IndustryDetails {
 
 const IndustryDetails = () => {
     const { industryId } = useParams();
+    const { hasFullAccess, canOnlyViewAndUpdateUnitMeta } = useAuth();
     const [industryData, setIndustryData] = useState<IndustryDetails | null>(
         null
     );
@@ -107,8 +109,17 @@ const IndustryDetails = () => {
     };
 
     const handleEditUnit = (unit: any) => {
-        setSelectedUnit(unit);
-        setShowEditUnit(true);
+        // Only allow editing if user has full access
+        if (hasFullAccess()) {
+            setSelectedUnit(unit);
+            setShowEditUnit(true);
+        } else {
+            toast({
+                title: 'Access Restricted',
+                description: 'You do not have permission to edit units.',
+                variant: 'destructive',
+            });
+        }
     };
 
     const handleRefresh = () => {
@@ -181,6 +192,7 @@ const IndustryDetails = () => {
                     onClick={() => setShowEditIndustry(true)}
                     variant='outline'
                     size='sm'
+                    disabled={canOnlyViewAndUpdateUnitMeta()}
                 >
                     <Edit className='h-4 w-4 mr-2' />
                     Edit Industry
@@ -247,6 +259,7 @@ const IndustryDetails = () => {
                 <Button
                     onClick={() => setShowCreateUnit(true)}
                     className='h-20 flex-col gap-2'
+                    disabled={canOnlyViewAndUpdateUnitMeta()}
                 >
                     <Plus className='h-6 w-6' />
                     Create Unit
@@ -255,6 +268,7 @@ const IndustryDetails = () => {
                     onClick={() => setShowCreateCategory(true)}
                     variant='outline'
                     className='h-20 flex-col gap-2'
+                    disabled={canOnlyViewAndUpdateUnitMeta()}
                 >
                     <Plus className='h-6 w-6' />
                     Add Category
@@ -263,6 +277,7 @@ const IndustryDetails = () => {
                     onClick={scrollToPermissions}
                     variant='outline'
                     className='h-20 flex-col gap-2'
+                    disabled={canOnlyViewAndUpdateUnitMeta()}
                 >
                     <Users className='h-6 w-6' />
                     Manage Permissions
@@ -271,6 +286,7 @@ const IndustryDetails = () => {
                     onClick={scrollToDataValidation}
                     variant='outline'
                     className='h-20 flex-col gap-2'
+                    disabled={canOnlyViewAndUpdateUnitMeta()}
                 >
                     <CheckCircle className='h-6 w-6' />
                     Data Validation
@@ -285,12 +301,29 @@ const IndustryDetails = () => {
                 </Button>
             </div>
 
+            {/* Limited Access Notice */}
+            {canOnlyViewAndUpdateUnitMeta() && (
+                <Card className="border-amber-200 bg-amber-50">
+                    <CardContent className="pt-6">
+                        <div className="flex items-center gap-2 text-amber-800">
+                            <Settings className="h-5 w-5" />
+                            <div>
+                                <p className="font-medium">Limited Access Mode</p>
+                                <p className="text-sm text-amber-700">
+                                    You can view all details and update unit metadata only. Other editing functions are restricted.
+                                </p>
+                            </div>
+                        </div>
+                    </CardContent>
+                </Card>
+            )}
+
             {/* Units Table */}
             <Card>
                 <CardHeader>
                     <CardTitle>Units</CardTitle>
                     <CardDescription>
-                        Manage all units for this industry
+                        {hasFullAccess() ? 'Manage all units for this industry' : 'View units for this industry'}
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -306,7 +339,7 @@ const IndustryDetails = () => {
                 <CardHeader>
                     <CardTitle>Categories</CardTitle>
                     <CardDescription>
-                        Manage categories and subcategories
+                        {hasFullAccess() ? 'Manage categories and subcategories' : 'View categories and subcategories'}
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -319,33 +352,37 @@ const IndustryDetails = () => {
                 </CardContent>
             </Card>
 
-            {/* Permissions Management */}
-            <div ref={permissionsRef}>
-                <Card>
-                    <CardHeader>
-                        <CardTitle>User Permissions</CardTitle>
-                        <CardDescription>
-                            Manage user access and permissions for this industry
-                        </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        <PermissionsTable industryId={industryId!} />
-                    </CardContent>
-                </Card>
-            </div>
+            {/* Permissions Management - Only show for full access users */}
+            {hasFullAccess() && (
+                <div ref={permissionsRef}>
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>User Permissions</CardTitle>
+                            <CardDescription>
+                                Manage user access and permissions for this industry
+                            </CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <PermissionsTable industryId={industryId!} />
+                        </CardContent>
+                    </Card>
+                </div>
+            )}
 
-            {/* Data Validation Card */}
-            <div ref={dataValidationRef}>
-                <DataValidationCard
-                    industryId={industryId!}
-                    units={industryDetails.units.map((unit) => ({
-                        unitId: unit.unitId,
-                        unitName: unit.unitName,
-                    }))}
-                />
-            </div>
+            {/* Data Validation Card - Only show for full access users */}
+            {hasFullAccess() && (
+                <div ref={dataValidationRef}>
+                    <DataValidationCard
+                        industryId={industryId!}
+                        units={industryDetails.units.map((unit) => ({
+                            unitId: unit.unitId,
+                            unitName: unit.unitName,
+                        }))}
+                    />
+                </div>
+            )}
 
-            {/* Units Meta Management */}
+            {/* Units Meta Management - Always show */}
             <div ref={unitsMetaRef}>
                 <UnitsMetaManager
                     industryId={industryId!}
@@ -356,35 +393,39 @@ const IndustryDetails = () => {
                 />
             </div>
 
-            {/* Dialogs */}
-            <CreateUnitDialog
-                open={showCreateUnit}
-                onOpenChange={setShowCreateUnit}
-                industryId={industryId!}
-                onSuccess={handleRefresh}
-            />
+            {/* Dialogs - Only render for full access users */}
+            {hasFullAccess() && (
+                <>
+                    <CreateUnitDialog
+                        open={showCreateUnit}
+                        onOpenChange={setShowCreateUnit}
+                        industryId={industryId!}
+                        onSuccess={handleRefresh}
+                    />
 
-            <CreateCategoryDialog
-                open={showCreateCategory}
-                onOpenChange={setShowCreateCategory}
-                industryId={industryId!}
-                onSuccess={handleRefresh}
-            />
+                    <CreateCategoryDialog
+                        open={showCreateCategory}
+                        onOpenChange={setShowCreateCategory}
+                        industryId={industryId!}
+                        onSuccess={handleRefresh}
+                    />
 
-            <EditUnitDialog
-                open={showEditUnit}
-                onOpenChange={setShowEditUnit}
-                unit={selectedUnit}
-                industryId={industryId!}
-                onSuccess={handleRefresh}
-            />
+                    <EditUnitDialog
+                        open={showEditUnit}
+                        onOpenChange={setShowEditUnit}
+                        unit={selectedUnit}
+                        industryId={industryId!}
+                        onSuccess={handleRefresh}
+                    />
 
-            <EditIndustryDialog
-                open={showEditIndustry}
-                onOpenChange={setShowEditIndustry}
-                industryData={industryDetails}
-                onSuccess={handleRefresh}
-            />
+                    <EditIndustryDialog
+                        open={showEditIndustry}
+                        onOpenChange={setShowEditIndustry}
+                        industryData={industryDetails}
+                        onSuccess={handleRefresh}
+                    />
+                </>
+            )}
         </div>
     );
 };
