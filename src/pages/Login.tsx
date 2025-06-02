@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { Building2 } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
 
 const Login = () => {
     const [credentials, setCredentials] = useState({
@@ -16,6 +17,7 @@ const Login = () => {
     const [isLoading, setIsLoading] = useState(false);
     const { toast } = useToast();
     const navigate = useNavigate();
+    const { setUser } = useAuth();
 
     const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -44,14 +46,17 @@ const Login = () => {
                     localStorage.setItem('adminUser', JSON.stringify(data));
                     localStorage.setItem('authToken', data.token || '');
                     
+                    // Update auth context state immediately
+                    setUser(data);
+                    
                     toast({
                         title: 'Login Successful',
                         description: 'Welcome to Admin Panel',
                     });
                     
                     console.log('Redirecting to dashboard...');
-                    // Force redirect to dashboard
-                    window.location.href = '/';
+                    // Use navigate instead of window.location for better state management
+                    navigate('/', { replace: true });
                 } else {
                     toast({
                         title: 'Access Denied',
