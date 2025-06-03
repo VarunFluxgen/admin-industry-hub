@@ -21,21 +21,49 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+// Helper function to check if JWT token is expired
+const isTokenExpired = (token: string): boolean => {
+    try {
+        // Remove 'Bearer ' prefix if present
+        const cleanToken = token.replace('Bearer ', '');
+        
+        // Decode JWT payload (base64)
+        const payload = JSON.parse(atob(cleanToken.split('.')[1]));
+        
+        // Check if token has expired (exp is in seconds, Date.now() is in milliseconds)
+        const currentTime = Math.floor(Date.now() / 1000);
+        
+        return payload.exp < currentTime;
+    } catch (error) {
+        console.error('Error decoding JWT token:', error);
+        // If we can't decode the token, consider it expired
+        return true;
+    }
+};
+
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const [user, setUser] = useState<User | null>(null);
 
     useEffect(() => {
         const adminUser = localStorage.getItem('adminUser');
         const authToken = localStorage.getItem('authToken');
-        
+
         if (adminUser && authToken) {
             try {
+                // Check if token is expired
+                if (isTokenExpired(authToken)) {
+                    console.log('Auth token has expired, logging out...');
+                    localStorage.removeItem('adminUser');
+                    localStorage.removeItem('authToken');
+                    return;
+                }
+
                 const userData = JSON.parse(adminUser);
                 if (userData.industryId === 'ADMINAPP') {
                     setUser({
                         ...userData,
                         token: authToken,
-                        permissions: userData.permissions || []
+                        permissions: userData.permissions || [],
                     });
                 }
             } catch (error) {
@@ -55,8 +83,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
     const hasFullAccess = (): boolean => {
         if (!user) return false;
-        return user.permissions.some(permission => 
-            permission === 'SUPER_USER' || permission === 'ADMIN'
+        return user.permissions.some(
+            (permission) =>
+                permission === 'SUPER_USER' || permission === 'ADMIN'
         );
     };
 
@@ -66,14 +95,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     };
 
     return (
-        <AuthContext.Provider 
-            value={{ 
-                user, 
+        <AuthContext.Provider
+            value={{
+                user,
                 isAuthenticated: !!user,
                 setUser,
                 logout,
                 hasFullAccess,
-                canOnlyViewAndUpdateUnitMeta
+                canOnlyViewAndUpdateUnitMeta,
             }}
         >
             {children}
