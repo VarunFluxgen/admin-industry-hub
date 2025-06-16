@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import {
     Card,
@@ -29,6 +28,7 @@ import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { Edit, Plus, Calendar, AlertCircle } from 'lucide-react';
 import { logApiCall } from '@/utils/apiLogger';
+import { SearchableUnitSelect } from '@/components/SearchableUnitSelect';
 
 interface Unit {
     unitId: string;
@@ -291,7 +291,7 @@ export function UnitsMetaManager({ industryId, units }: UnitsMetaManagerProps) {
     };
 
     return (
-        <Card>
+        <Card className="w-full">
             <CardHeader>
                 <CardTitle>Units Meta Management</CardTitle>
                 <CardDescription>
@@ -300,27 +300,13 @@ export function UnitsMetaManager({ industryId, units }: UnitsMetaManagerProps) {
                 </CardDescription>
             </CardHeader>
             <CardContent className='space-y-6'>
-                <div className='space-y-2'>
-                    <Label htmlFor='unitSelect'>Select Unit</Label>
-                    <Select
-                        value={selectedUnitId}
-                        onValueChange={handleUnitChange}
-                    >
-                        <SelectTrigger>
-                            <SelectValue placeholder='Choose a unit to manage' />
-                        </SelectTrigger>
-                        <SelectContent>
-                            {units.map((unit) => (
-                                <SelectItem
-                                    key={unit.unitId}
-                                    value={unit.unitId}
-                                >
-                                    {unit.unitName} ({unit.unitId})
-                                </SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
-                </div>
+                <SearchableUnitSelect
+                    units={units}
+                    selectedUnitId={selectedUnitId}
+                    onUnitChange={handleUnitChange}
+                    placeholder="Choose a unit to manage"
+                    label="Select Unit"
+                />
 
                 {isLoading && (
                     <div className='text-center py-4'>Loading unit meta...</div>
@@ -344,60 +330,62 @@ export function UnitsMetaManager({ industryId, units }: UnitsMetaManagerProps) {
                             </Badge>
                         </div>
 
-                        <div className='rounded-md border'>
-                            <Table>
-                                <TableHeader>
-                                    <TableRow>
-                                        <TableHead>Created On</TableHead>
-                                        <TableHead>Meter Make</TableHead>
-                                        <TableHead>Meter Type</TableHead>
-                                        <TableHead>Device ID</TableHead>
-                                        <TableHead>Serial No</TableHead>
-                                        <TableHead>Actions</TableHead>
-                                    </TableRow>
-                                </TableHeader>
-                                <TableBody>
-                                    {unitMetaRecords.map((record, index) => (
-                                        <TableRow
-                                            key={`${record.unitId}-${index}`}
-                                        >
-                                            <TableCell>
-                                                {record.createdOn || 'Not set'}
-                                            </TableCell>
-                                            <TableCell>
-                                                {record.meterMake || 'Not set'}
-                                            </TableCell>
-                                            <TableCell>
-                                                {record.meterType || 'Not set'}
-                                            </TableCell>
-                                            <TableCell>
-                                                {record.deviceId || 'Not set'}
-                                            </TableCell>
-                                            <TableCell>
-                                                {record.serialNo || 'Not set'}
-                                            </TableCell>
-                                            <TableCell>
-                                                <Button
-                                                    variant='outline'
-                                                    size='sm'
-                                                    onClick={() =>
-                                                        handleEditRecord(record)
-                                                    }
-                                                >
-                                                    <Edit className='h-4 w-4 mr-1' />
-                                                    Manage
-                                                </Button>
-                                            </TableCell>
+                        <div className='w-full overflow-x-auto'>
+                            <div className='rounded-md border min-w-full'>
+                                <Table>
+                                    <TableHeader>
+                                        <TableRow>
+                                            <TableHead className="min-w-[120px]">Created On</TableHead>
+                                            <TableHead className="min-w-[120px]">Meter Make</TableHead>
+                                            <TableHead className="min-w-[120px]">Meter Type</TableHead>
+                                            <TableHead className="min-w-[100px]">Device ID</TableHead>
+                                            <TableHead className="min-w-[100px]">Serial No</TableHead>
+                                            <TableHead className="min-w-[100px]">Actions</TableHead>
                                         </TableRow>
-                                    ))}
-                                </TableBody>
-                            </Table>
+                                    </TableHeader>
+                                    <TableBody>
+                                        {unitMetaRecords.map((record, index) => (
+                                            <TableRow
+                                                key={`${record.unitId}-${index}`}
+                                            >
+                                                <TableCell>
+                                                    {record.createdOn || 'Not set'}
+                                                </TableCell>
+                                                <TableCell>
+                                                    {record.meterMake || 'Not set'}
+                                                </TableCell>
+                                                <TableCell>
+                                                    {record.meterType || 'Not set'}
+                                                </TableCell>
+                                                <TableCell>
+                                                    {record.deviceId || 'Not set'}
+                                                </TableCell>
+                                                <TableCell>
+                                                    {record.serialNo || 'Not set'}
+                                                </TableCell>
+                                                <TableCell>
+                                                    <Button
+                                                        variant='outline'
+                                                        size='sm'
+                                                        onClick={() =>
+                                                            handleEditRecord(record)
+                                                        }
+                                                    >
+                                                        <Edit className='h-4 w-4 mr-1' />
+                                                        Manage
+                                                    </Button>
+                                                </TableCell>
+                                            </TableRow>
+                                        ))}
+                                    </TableBody>
+                                </Table>
+                            </div>
                         </div>
                     </div>
                 )}
 
                 {showEditForm && editingRecord && (
-                    <div className='space-y-4'>
+                    <div className='space-y-4 w-full'>
                         <div className='flex items-center justify-between'>
                             <h3 className='text-lg font-semibold'>
                                 Edit Meta Record
@@ -413,8 +401,8 @@ export function UnitsMetaManager({ industryId, units }: UnitsMetaManagerProps) {
                             </Button>
                         </div>
 
-                        <form onSubmit={handleSubmit} className='space-y-4'>
-                            <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+                        <form onSubmit={handleSubmit} className='space-y-4 w-full'>
+                            <div className='grid grid-cols-1 md:grid-cols-2 gap-4 w-full'>
                                 {/* Dropdown fields */}
                                 {Object.entries(dropdownOptions).map(
                                     ([field, options]) => (
@@ -440,7 +428,7 @@ export function UnitsMetaManager({ industryId, units }: UnitsMetaManagerProps) {
                                                     )
                                                 }
                                             >
-                                                <SelectTrigger>
+                                                <SelectTrigger className="w-full">
                                                     <SelectValue
                                                         placeholder={`Select ${field}`}
                                                     />
@@ -483,6 +471,7 @@ export function UnitsMetaManager({ industryId, units }: UnitsMetaManagerProps) {
                                         </Label>
                                         <Input
                                             id={field}
+                                            className="w-full"
                                             value={
                                                 editingRecord[
                                                     field as keyof UnitMeta
@@ -499,12 +488,13 @@ export function UnitsMetaManager({ industryId, units }: UnitsMetaManagerProps) {
                                     </div>
                                 ))}
 
-                                <div className='space-y-2'>
+                                <div className='space-y-2 md:col-span-2'>
                                     <Label htmlFor='image'>Upload Image</Label>
                                     <Input
                                         id='image'
                                         type='file'
                                         accept='image/*'
+                                        className="w-full"
                                         onChange={(e) =>
                                             setSelectedImage(
                                                 e.target.files?.[0] || null
