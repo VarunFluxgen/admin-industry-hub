@@ -52,8 +52,7 @@ export function EditUnitDialog({
 }: EditUnitDialogProps) {
     const { hasFullAccess } = useAuth();
     const [isLoading, setIsLoading] = useState(false);
-    const [availableUnits, setAvailableUnits] = useState<any[]>([]);
-    const [availableSubCategories, setAvailableSubCategories] = useState<string[]>([]);
+    const [industryData, setIndustryData] = useState<any>(null);
     const [formData, setFormData] = useState({
         unitName: '',
         deviceId: '',
@@ -93,10 +92,10 @@ export function EditUnitDialog({
     const isVirtualNode = unit?.standardCategoryId === 'VIRTUAL_CATEGORY' || unit?.standardCategoryId === 'VIRTUAL_NODE';
     const isQualityUnit = unit?.standardCategoryId === 'QUALITY_CATEGORY';
 
-    // Fetch available units and subcategories from the current industry
+    // Fetch industry data
     useEffect(() => {
         const fetchIndustryData = async () => {
-            if (!isVirtualNode || !industryId) return;
+            if (!industryId) return;
 
             try {
                 const response = await fetch(`https://admin-aquagen-api-bfckdag2aydtegc2.southindia-01.azurewebsites.net/api/admin/industry/${industryId}`, {
@@ -107,25 +106,8 @@ export function EditUnitDialog({
                 });
 
                 if (response.ok) {
-                    const industryData = await response.json();
-                    
-                    // Extract units from industry data
-                    if (industryData.units) {
-                        setAvailableUnits(industryData.units.filter((u: any) => u.unitId !== unit?.unitId));
-                    }
-
-                    // Extract subcategories from industry data
-                    if (industryData.categories) {
-                        const allSubCategories: string[] = [];
-                        industryData.categories.forEach((category: any) => {
-                            if (category.subCategories) {
-                                category.subCategories.forEach((subCat: any) => {
-                                    allSubCategories.push(subCat.subCategoryId);
-                                });
-                            }
-                        });
-                        setAvailableSubCategories(allSubCategories);
-                    }
+                    const data = await response.json();
+                    setIndustryData(data.industryDetails);
                 }
             } catch (error) {
                 console.error('Failed to fetch industry data:', error);
@@ -133,7 +115,7 @@ export function EditUnitDialog({
         };
 
         fetchIndustryData();
-    }, [isVirtualNode, industryId, unit?.unitId]);
+    }, [industryId]);
 
     useEffect(() => {
         if (unit) {
@@ -375,11 +357,14 @@ export function EditUnitDialog({
         return tabs;
     };
 
-    const getMetaDescription = () => {
-        const unitsText = formData.metaUnits.length > 0 ? formData.metaUnits.map(id => `{${id}}`).join(' + ') : 'none';
-        const subCategoriesText = formData.metaSubCategories.length > 0 ? formData.metaSubCategories.map(id => `{${id}}`).join(' + ') : 'none';
-        return `For units: ${unitsText}\nFor subCategories: ${subCategoriesText}`;
-    };
+    // Extract available units (excluding current unit)
+    const availableUnits = industryData?.units?.filter((u: any) => u.unitId !== unit?.unitId) || [];
+
+    // Extract all subcategories from categories
+    const availableSubCategories = industryData?.categories ? 
+        Object.values(industryData.categories).flatMap((category: any) => 
+            category.subCategories?.map((subCat: any) => subCat.id) || []
+        ) : [];
 
     const tabsList = getTabsList();
 
@@ -691,87 +676,80 @@ export function EditUnitDialog({
 
                         {isVirtualNode && (
                             <TabsContent value='meta' className='space-y-4'>
-                                <div className='space-y-4'>
-                                    <div className='p-4 bg-gray-50 rounded-lg'>
-                                        <p className='text-sm font-medium text-gray-700 mb-2'>Description (How to write calculations):</p>
-                                        <pre className='font-mono text-sm whitespace-pre-wrap text-gray-600'>{getMetaDescription()}</pre>
+                                <div className='space-y-6'>
+                                    <div className='space-y-3'>
+                                        <Label className='text-base font-medium'>Units from Current Industry</Label>
+                                        <p className='text-sm text-gray-600'>Select units to include in calculations:</p>
+                                        
+                                        <div className='max-h-40 overflow-y-auto border rounded-lg p-3 space-y-2'>
+                                            {availableUnits.length > 0 ? (
+                                                availableUnits.map((unit: any) => (
+                                                    <div key={unit.unitId} className='flex items-center space-x-3 p-2 hover:bg-gray-50 rounded'>
+                                                        <Checkbox
+                                                            checked={formData.metaUnits.includes(unit.unitId)}
+                                                            onCheckedChange={(checked) => {
+                                                                if (!isReadOnly) {
+                                                                    if (checked) {
+                                                                        addMetaUnit(unit.unitId);
+                                                                    } else {
+                                                                        removeMetaUnit(unit.unitId);
+                                                                    }
+                                                                }
+                                                            }}
+                                                            disabled={isReadOnly}
+                                                        />
+                                                        <div className='flex-1'>
+                                                            <span className='font-medium text-sm'>{unit.unitName}</span>
+                                                            <span className='text-xs text-gray-500 ml-2'>({unit.unitId})</span>
+                                                        </div>
+                                                    </div>
+                                                ))
+                                            ) : (
+                                                <p className='text-sm text-gray-500 italic'>No units available in current industry</p>
+                                            )}
+                                        </div>
                                     </div>
-                                    
-                                    <div className='space-y-6'>
-                                        <div className='space-y-3'>
-                                            <Label className='text-base font-medium'>Units from Current Industry</Label>
-                                            <p className='text-sm text-gray-600'>Select units to include in calculations:</p>
-                                            
-                                            <div className='max-h-40 overflow-y-auto border rounded-lg p-3 space-y-2'>
-                                                {availableUnits.length > 0 ? (
-                                                    availableUnits.map(unit => (
-                                                        <div key={unit.unitId} className='flex items-center space-x-3 p-2 hover:bg-gray-50 rounded'>
-                                                            <Checkbox
-                                                                checked={formData.metaUnits.includes(unit.unitId)}
-                                                                onCheckedChange={(checked) => {
-                                                                    if (!isReadOnly) {
-                                                                        if (checked) {
-                                                                            addMetaUnit(unit.unitId);
-                                                                        } else {
-                                                                            removeMetaUnit(unit.unitId);
-                                                                        }
-                                                                    }
-                                                                }}
-                                                                disabled={isReadOnly}
-                                                            />
-                                                            <div className='flex-1'>
-                                                                <span className='font-medium text-sm'>{unit.unitName}</span>
-                                                                <span className='text-xs text-gray-500 ml-2'>({unit.unitId})</span>
-                                                            </div>
-                                                        </div>
-                                                    ))
-                                                ) : (
-                                                    <p className='text-sm text-gray-500 italic'>No units available in current industry</p>
-                                                )}
-                                            </div>
-                                        </div>
 
-                                        <div className='space-y-2'>
-                                            <Label htmlFor='metaCalculations' className='text-base font-medium'>Calculations</Label>
-                                            <Input
-                                                id='metaCalculations'
-                                                name='metaCalculations'
-                                                value={formData.metaCalculations}
-                                                onChange={handleInputChange}
-                                                placeholder='Enter calculation formula (e.g., {unit1} + {unit2} - {subCategory1})'
-                                                disabled={isReadOnly}
-                                                className={isReadOnly ? 'bg-gray-100' : ''}
-                                            />
-                                        </div>
+                                    <div className='space-y-2'>
+                                        <Label htmlFor='metaCalculations' className='text-base font-medium'>Calculations</Label>
+                                        <Input
+                                            id='metaCalculations'
+                                            name='metaCalculations'
+                                            value={formData.metaCalculations}
+                                            onChange={handleInputChange}
+                                            placeholder='Enter calculation formula (e.g., {unit1} + {unit2} - {subCategory1})'
+                                            disabled={isReadOnly}
+                                            className={isReadOnly ? 'bg-gray-100' : ''}
+                                        />
+                                    </div>
 
-                                        <div className='space-y-3'>
-                                            <Label className='text-base font-medium'>Sub Categories from Current Industry</Label>
-                                            <p className='text-sm text-gray-600'>Select subcategories to include in calculations:</p>
-                                            
-                                            <div className='max-h-40 overflow-y-auto border rounded-lg p-3 space-y-2'>
-                                                {availableSubCategories.length > 0 ? (
-                                                    availableSubCategories.map(subCat => (
-                                                        <div key={subCat} className='flex items-center space-x-3 p-2 hover:bg-gray-50 rounded'>
-                                                            <Checkbox
-                                                                checked={formData.metaSubCategories.includes(subCat)}
-                                                                onCheckedChange={(checked) => {
-                                                                    if (!isReadOnly) {
-                                                                        if (checked) {
-                                                                            addMetaSubCategory(subCat);
-                                                                        } else {
-                                                                            removeMetaSubCategory(subCat);
-                                                                        }
+                                    <div className='space-y-3'>
+                                        <Label className='text-base font-medium'>Sub Categories from Current Industry</Label>
+                                        <p className='text-sm text-gray-600'>Select subcategories to include in calculations:</p>
+                                        
+                                        <div className='max-h-40 overflow-y-auto border rounded-lg p-3 space-y-2'>
+                                            {availableSubCategories.length > 0 ? (
+                                                availableSubCategories.map((subCat: string) => (
+                                                    <div key={subCat} className='flex items-center space-x-3 p-2 hover:bg-gray-50 rounded'>
+                                                        <Checkbox
+                                                            checked={formData.metaSubCategories.includes(subCat)}
+                                                            onCheckedChange={(checked) => {
+                                                                if (!isReadOnly) {
+                                                                    if (checked) {
+                                                                        addMetaSubCategory(subCat);
+                                                                    } else {
+                                                                        removeMetaSubCategory(subCat);
                                                                     }
-                                                                }}
-                                                                disabled={isReadOnly}
-                                                            />
-                                                            <span className='font-medium text-sm'>{subCat}</span>
-                                                        </div>
-                                                    ))
-                                                ) : (
-                                                    <p className='text-sm text-gray-500 italic'>No subcategories available in current industry</p>
-                                                )}
-                                            </div>
+                                                                }
+                                                            }}
+                                                            disabled={isReadOnly}
+                                                        />
+                                                        <span className='font-medium text-sm'>{subCat}</span>
+                                                    </div>
+                                                ))
+                                            ) : (
+                                                <p className='text-sm text-gray-500 italic'>No subcategories available in current industry</p>
+                                            )}
                                         </div>
                                     </div>
                                 </div>
