@@ -47,7 +47,34 @@ export function EditIndustryDialog({
     const [newSubscriptionEmail, setNewSubscriptionEmail] = useState('');
     const { toast } = useToast();
 
+    // Reset form data when dialog opens/closes or industry data changes
     useEffect(() => {
+        if (open && industryData) {
+            setFormData({
+                industryName: industryData.industryName || '',
+                shiftName: industryData.meta?.shift?.shiftName || '',
+                startAt: industryData.meta?.shift?.startAt || '',
+                endAt: industryData.meta?.shift?.endAt || '',
+                reportsEnabled: industryData.meta?.reports?.enabled || false,
+                reportsEmailIds: industryData.meta?.reports?.emailIds || [],
+                alertsEnabled:
+                    industryData.meta?.alerts?.email?.enabled || false,
+                alertsEmailIds:
+                    industryData.meta?.alerts?.email?.emailIds || [],
+                subscriptionEndDate:
+                    industryData.meta?.subscription?.endDate || '',
+                subscriptionEmailIds:
+                    industryData.meta?.subscription?.emailIds || [],
+            });
+            // Clear new email inputs
+            setNewReportEmail('');
+            setNewAlertEmail('');
+            setNewSubscriptionEmail('');
+        }
+    }, [open, industryData]);
+
+    const handleCancel = () => {
+        // Reset form to original data
         if (industryData) {
             setFormData({
                 industryName: industryData.industryName || '',
@@ -65,8 +92,12 @@ export function EditIndustryDialog({
                 subscriptionEmailIds:
                     industryData.meta?.subscription?.emailIds || [],
             });
+            setNewReportEmail('');
+            setNewAlertEmail('');
+            setNewSubscriptionEmail('');
         }
-    }, [industryData]);
+        onOpenChange(false);
+    };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -295,6 +326,9 @@ export function EditIndustryDialog({
 
                         <div className='space-y-2'>
                             <Label>Report Email IDs</Label>
+                            <p className='text-xs text-muted-foreground mb-2'>
+                                Enter email addresses to receive automated reports. Press the + button to add each email ID.
+                            </p>
                             <div className='flex gap-2'>
                                 <Input
                                     value={newReportEmail}
@@ -308,6 +342,7 @@ export function EditIndustryDialog({
                                     type='button'
                                     onClick={() => addEmail('reports')}
                                     size='sm'
+                                    title='Add email ID'
                                 >
                                     <Plus className='h-4 w-4' />
                                 </Button>
@@ -366,6 +401,9 @@ export function EditIndustryDialog({
 
                         <div className='space-y-2'>
                             <Label>Alert Email IDs</Label>
+                            <p className='text-xs text-muted-foreground mb-2'>
+                                Enter email addresses to receive system alerts and notifications. Press the + button to add each email ID.
+                            </p>
                             <div className='flex gap-2'>
                                 <Input
                                     value={newAlertEmail}
@@ -379,6 +417,7 @@ export function EditIndustryDialog({
                                     type='button'
                                     onClick={() => addEmail('alerts')}
                                     size='sm'
+                                    title='Add email ID'
                                 >
                                     <Plus className='h-4 w-4' />
                                 </Button>
@@ -427,6 +466,9 @@ export function EditIndustryDialog({
 
                         <div className='space-y-2'>
                             <Label>Subscription Email IDs</Label>
+                            <p className='text-xs text-muted-foreground mb-2'>
+                                Enter email addresses to receive subscription-related notifications. Press the + button to add each email ID.
+                            </p>
                             <div className='flex gap-2'>
                                 <Input
                                     value={newSubscriptionEmail}
@@ -440,6 +482,7 @@ export function EditIndustryDialog({
                                     type='button'
                                     onClick={() => addEmail('subscription')}
                                     size='sm'
+                                    title='Add email ID'
                                 >
                                     <Plus className='h-4 w-4' />
                                 </Button>
@@ -479,7 +522,7 @@ export function EditIndustryDialog({
                         <Button
                             type='button'
                             variant='outline'
-                            onClick={() => onOpenChange(false)}
+                            onClick={handleCancel}
                         >
                             Cancel
                         </Button>

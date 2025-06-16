@@ -1,3 +1,4 @@
+
 import { useState, useMemo } from 'react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
@@ -29,12 +30,21 @@ export function UnitsTable({ units, onEditUnit }: UnitsTableProps) {
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
 
   const filteredAndSortedUnits = useMemo(() => {
-    let filtered = units.filter(unit =>
-      unit.unitId.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      unit.unitName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      unit.unitType.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      unit.standardCategoryId.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    if (!units || units.length === 0) {
+      return [];
+    }
+
+    let filtered = units.filter(unit => {
+      if (!searchTerm.trim()) return true;
+      
+      const searchLower = searchTerm.toLowerCase();
+      return (
+        (unit.unitId || '').toLowerCase().includes(searchLower) ||
+        (unit.unitName || '').toLowerCase().includes(searchLower) ||
+        (unit.unitType || '').toLowerCase().includes(searchLower) ||
+        (unit.standardCategoryId || '').toLowerCase().includes(searchLower)
+      );
+    });
 
     return filtered.sort((a, b) => {
       const aVal = a[sortField];
