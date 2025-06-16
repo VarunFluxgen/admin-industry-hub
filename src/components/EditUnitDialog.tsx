@@ -678,33 +678,50 @@ export function EditUnitDialog({
                             <TabsContent value='meta' className='space-y-4'>
                                 <div className='space-y-6'>
                                     <div className='space-y-3'>
-                                        <Label className='text-base font-medium'>Units</Label>
+                                        <div className='flex items-center justify-between'>
+                                            <Label className='text-base font-medium'>Units</Label>
+                                            {!isReadOnly && (
+                                                <Select onValueChange={addMetaUnit}>
+                                                    <SelectTrigger className="w-48">
+                                                        <SelectValue placeholder="Add unit..." />
+                                                    </SelectTrigger>
+                                                    <SelectContent>
+                                                        {availableUnits.filter((u: any) => !formData.metaUnits.includes(u.unitId)).map((unit: any) => (
+                                                            <SelectItem key={unit.unitId} value={unit.unitId}>
+                                                                {unit.unitName} ({unit.unitId})
+                                                            </SelectItem>
+                                                        ))}
+                                                    </SelectContent>
+                                                </Select>
+                                            )}
+                                        </div>
                                         
-                                        <div className='max-h-40 overflow-y-auto border rounded-lg p-3 space-y-2'>
-                                            {availableUnits.length > 0 ? (
-                                                availableUnits.map((unit: any) => (
-                                                    <div key={unit.unitId} className='flex items-center space-x-3 p-2 hover:bg-gray-50 rounded'>
-                                                        <Checkbox
-                                                            checked={formData.metaUnits.includes(unit.unitId)}
-                                                            onCheckedChange={(checked) => {
-                                                                if (!isReadOnly) {
-                                                                    if (checked) {
-                                                                        addMetaUnit(unit.unitId);
-                                                                    } else {
-                                                                        removeMetaUnit(unit.unitId);
-                                                                    }
-                                                                }
-                                                            }}
-                                                            disabled={isReadOnly}
-                                                        />
-                                                        <div className='flex-1'>
-                                                            <span className='font-medium text-sm'>{unit.unitName}</span>
-                                                            <span className='text-xs text-gray-500 ml-2'>({unit.unitId})</span>
-                                                        </div>
-                                                    </div>
-                                                ))
+                                        <div className='min-h-20 border rounded-lg p-3'>
+                                            {formData.metaUnits.length > 0 ? (
+                                                <div className='space-y-2'>
+                                                    {formData.metaUnits.map((unitId) => {
+                                                        const unitData = availableUnits.find((u: any) => u.unitId === unitId);
+                                                        return (
+                                                            <div key={unitId} className='flex items-center justify-between p-2 bg-gray-50 rounded'>
+                                                                <span className='font-medium text-sm'>
+                                                                    {unitData?.unitName || unitId} ({unitId})
+                                                                </span>
+                                                                {!isReadOnly && (
+                                                                    <Button
+                                                                        type="button"
+                                                                        size="sm"
+                                                                        variant="outline"
+                                                                        onClick={() => removeMetaUnit(unitId)}
+                                                                    >
+                                                                        <X className="h-4 w-4" />
+                                                                    </Button>
+                                                                )}
+                                                            </div>
+                                                        );
+                                                    })}
+                                                </div>
                                             ) : (
-                                                <p className='text-sm text-gray-500 italic'>No units available in current industry</p>
+                                                <p className='text-sm text-gray-500 italic text-center py-4'>No units added</p>
                                             )}
                                         </div>
                                     </div>
@@ -716,37 +733,52 @@ export function EditUnitDialog({
                                             name='metaCalculations'
                                             value={formData.metaCalculations}
                                             onChange={handleInputChange}
-                                            placeholder='Enter calculation formula'
+                                            placeholder='Format: {unitId1} + {unitId2} - {subCategoryId}'
                                             disabled={isReadOnly}
                                             className={isReadOnly ? 'bg-gray-100' : ''}
                                         />
                                     </div>
 
                                     <div className='space-y-3'>
-                                        <Label className='text-base font-medium'>Sub Categories</Label>
+                                        <div className='flex items-center justify-between'>
+                                            <Label className='text-base font-medium'>Sub Categories</Label>
+                                            {!isReadOnly && (
+                                                <Select onValueChange={addMetaSubCategory}>
+                                                    <SelectTrigger className="w-48">
+                                                        <SelectValue placeholder="Add subcategory..." />
+                                                    </SelectTrigger>
+                                                    <SelectContent>
+                                                        {availableSubCategories.filter((subCat: string) => !formData.metaSubCategories.includes(subCat)).map((subCat: string) => (
+                                                            <SelectItem key={subCat} value={subCat}>
+                                                                {subCat}
+                                                            </SelectItem>
+                                                        ))}
+                                                    </SelectContent>
+                                                </Select>
+                                            )}
+                                        </div>
                                         
-                                        <div className='max-h-40 overflow-y-auto border rounded-lg p-3 space-y-2'>
-                                            {availableSubCategories.length > 0 ? (
-                                                availableSubCategories.map((subCat: string) => (
-                                                    <div key={subCat} className='flex items-center space-x-3 p-2 hover:bg-gray-50 rounded'>
-                                                        <Checkbox
-                                                            checked={formData.metaSubCategories.includes(subCat)}
-                                                            onCheckedChange={(checked) => {
-                                                                if (!isReadOnly) {
-                                                                    if (checked) {
-                                                                        addMetaSubCategory(subCat);
-                                                                    } else {
-                                                                        removeMetaSubCategory(subCat);
-                                                                    }
-                                                                }
-                                                            }}
-                                                            disabled={isReadOnly}
-                                                        />
-                                                        <span className='font-medium text-sm'>{subCat}</span>
-                                                    </div>
-                                                ))
+                                        <div className='min-h-20 border rounded-lg p-3'>
+                                            {formData.metaSubCategories.length > 0 ? (
+                                                <div className='space-y-2'>
+                                                    {formData.metaSubCategories.map((subCat) => (
+                                                        <div key={subCat} className='flex items-center justify-between p-2 bg-gray-50 rounded'>
+                                                            <span className='font-medium text-sm'>{subCat}</span>
+                                                            {!isReadOnly && (
+                                                                <Button
+                                                                    type="button"
+                                                                    size="sm"
+                                                                    variant="outline"
+                                                                    onClick={() => removeMetaSubCategory(subCat)}
+                                                                >
+                                                                    <X className="h-4 w-4" />
+                                                                </Button>
+                                                            )}
+                                                        </div>
+                                                    ))}
+                                                </div>
                                             ) : (
-                                                <p className='text-sm text-gray-500 italic'>No subcategories available in current industry</p>
+                                                <p className='text-sm text-gray-500 italic text-center py-4'>No subcategories added</p>
                                             )}
                                         </div>
                                     </div>
