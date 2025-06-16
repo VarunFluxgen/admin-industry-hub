@@ -1,3 +1,4 @@
+
 import { useState, useMemo } from 'react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
@@ -7,6 +8,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Edit, Search, ArrowUpDown, Download } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import * as XLSX from 'xlsx';
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
 
 interface Unit {
   unitId: string;
@@ -28,6 +37,8 @@ export function UnitsTable({ units, onEditUnit }: UnitsTableProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const [sortField, setSortField] = useState<keyof Unit>('unitName');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
 
   const filteredAndSortedUnits = useMemo(() => {
     if (!units || units.length === 0) {
@@ -69,6 +80,12 @@ export function UnitsTable({ units, onEditUnit }: UnitsTableProps) {
     });
   }, [units, searchTerm, sortField, sortDirection]);
 
+  // Pagination logic
+  const totalPages = Math.ceil(filteredAndSortedUnits.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const currentUnits = filteredAndSortedUnits.slice(startIndex, endIndex);
+
   const handleSort = (field: keyof Unit) => {
     if (sortField === field) {
       setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
@@ -76,6 +93,7 @@ export function UnitsTable({ units, onEditUnit }: UnitsTableProps) {
       setSortField(field);
       setSortDirection('asc');
     }
+    setCurrentPage(1); // Reset to first page when sorting
   };
 
   const handleDownloadExcel = () => {
@@ -83,7 +101,7 @@ export function UnitsTable({ units, onEditUnit }: UnitsTableProps) {
       return;
     }
 
-    // Prepare data for Excel export
+    // Export ALL units data, not just filtered/paginated data
     const excelData = units.map(unit => ({
       'Unit ID': unit.unitId,
       'Unit Name': unit.unitName,
@@ -105,14 +123,18 @@ export function UnitsTable({ units, onEditUnit }: UnitsTableProps) {
     ws['!cols'] = colWidths;
 
     // Add worksheet to workbook
-    XLSX.utils.book_append_sheet(wb, ws, 'Units Data');
+    XLSX.utils.book_append_sheet(wb, ws, 'All Units Data');
 
     // Generate filename with current timestamp
     const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
-    const filename = `units_data_${timestamp}.xlsx`;
+    const filename = `all_units_data_${timestamp}.xlsx`;
 
     // Download the file
     XLSX.writeFile(wb, filename);
+  };
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
   };
 
   const SortableHeader = ({ field, children }: { field: keyof Unit; children: React.ReactNode }) => (
@@ -136,7 +158,10 @@ export function UnitsTable({ units, onEditUnit }: UnitsTableProps) {
           <Input
             placeholder="Search units..."
             value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            onChange={(e) => {
+              setSearchTerm(e.target.value);
+              setCurrentPage(1); // Reset to first page when searching
+            }}
             className="pl-10"
           />
         </div>
@@ -168,7 +193,7 @@ export function UnitsTable({ units, onEditUnit }: UnitsTableProps) {
           className="shrink-0"
         >
           <Download className="h-4 w-4 mr-2" />
-          Download Excel
+          Download All Data
         </Button>
       </div>
 
@@ -186,7 +211,7 @@ export function UnitsTable({ units, onEditUnit }: UnitsTableProps) {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filteredAndSortedUnits.map((unit) => (
+            {currentUnits.map((unit) => (
               <TableRow key={unit.unitId}>
                 <TableCell className="font-medium">{unit.unitId}</TableCell>
                 <TableCell>{unit.unitName}</TableCell>
@@ -219,6 +244,42 @@ export function UnitsTable({ units, onEditUnit }: UnitsTableProps) {
           </div>
         )}
       </div>
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between">
+          <div className="text-sm text-muted-foreground">
+            Showing {startIndex + 1} to {Math.min(endIndex, filteredAndSortedUnits.length)} of {filteredAndSortedUnits.length} units
+          </div>
+          <Pagination>
+            <PaginationContent>
+              <PaginationItem>
+                <PaginationPrevious 
+                  onClick={() => handlePageChange(Math.max(1, currentPage - 1))}
+                  className={currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                />
+              </PaginationItem>
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                <PaginationItem key={page}>
+                  <PaginationLink
+                    onClick={() => handlePageChange(page)}
+                    isActive={currentPage === page}
+                    className="cursor-pointer"
+                  >
+                    {page}
+                  </PaginationLink>
+                </PaginationItem>
+              ))}
+              <PaginationItem>
+                <PaginationNext 
+                  onClick={() => handlePageChange(Math.min(totalPages, currentPage + 1))}
+                  className={currentPage === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                />
+              </PaginationItem>
+            </PaginationContent>
+          </Pagination>
+        </div>
+      )}
     </div>
   );
 }
