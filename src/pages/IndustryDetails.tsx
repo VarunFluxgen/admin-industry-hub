@@ -132,7 +132,7 @@ const IndustryDetails = () => {
 
     if (isLoading) {
         return (
-            <div className='flex-1 space-y-4 p-8 pt-6'>
+            <div className='flex-1 space-y-4 p-4 md:p-8 pt-6 w-full max-w-full overflow-x-hidden'>
                 <div className='flex items-center gap-4'>
                     <SidebarTrigger />
                     <div>
@@ -150,7 +150,7 @@ const IndustryDetails = () => {
 
     if (!industryData) {
         return (
-            <div className='flex-1 space-y-4 p-8 pt-6'>
+            <div className='flex-1 space-y-4 p-4 md:p-8 pt-6 w-full max-w-full overflow-x-hidden'>
                 <div className='flex items-center gap-4'>
                     <SidebarTrigger />
                     <div>
@@ -169,14 +169,14 @@ const IndustryDetails = () => {
     const { industryDetails } = industryData;
 
     return (
-        <div className='flex-1 space-y-6 p-8 pt-6'>
-            <div className='flex items-center gap-4'>
+        <div className='flex-1 space-y-6 p-4 md:p-8 pt-6 w-full max-w-full overflow-x-hidden'>
+            <div className='flex flex-col sm:flex-row items-start sm:items-center gap-4'>
                 <SidebarTrigger />
-                <div className='flex-1'>
-                    <h2 className='text-3xl font-bold tracking-tight'>
+                <div className='flex-1 min-w-0'>
+                    <h2 className='text-2xl md:text-3xl font-bold tracking-tight truncate'>
                         {industryDetails.industryName}
                     </h2>
-                    <p className='text-muted-foreground'>
+                    <p className='text-muted-foreground text-sm md:text-base'>
                         Industry ID: {industryDetails.industryId}
                     </p>
                 </div>
@@ -185,6 +185,7 @@ const IndustryDetails = () => {
                     variant='outline'
                     size='sm'
                     disabled={canOnlyViewAndUpdateUnitMeta()}
+                    className="shrink-0"
                 >
                     <Edit className='h-4 w-4 mr-2' />
                     Edit Industry
@@ -192,7 +193,7 @@ const IndustryDetails = () => {
             </div>
 
             {/* Industry Overview */}
-            <div className='grid gap-6 md:grid-cols-3'>
+            <div className='grid gap-4 md:gap-6 grid-cols-1 md:grid-cols-3'>
                 <Card>
                     <CardHeader className='flex flex-row items-center justify-between space-y-0 pb-2'>
                         <CardTitle className='text-sm font-medium'>
@@ -201,7 +202,7 @@ const IndustryDetails = () => {
                         <MapPin className='h-4 w-4 text-muted-foreground' />
                     </CardHeader>
                     <CardContent>
-                        <div className='text-2xl font-bold'>
+                        <div className='text-xl md:text-2xl font-bold'>
                             {industryDetails.place}
                         </div>
                         <p className='text-xs text-muted-foreground'>
@@ -236,7 +237,7 @@ const IndustryDetails = () => {
                         <Building2 className='h-4 w-4 text-muted-foreground' />
                     </CardHeader>
                     <CardContent>
-                        <div className='text-2xl font-bold'>
+                        <div className='text-xl md:text-2xl font-bold'>
                             {industryDetails.units.length}
                         </div>
                         <p className='text-xs text-muted-foreground'>
@@ -247,14 +248,14 @@ const IndustryDetails = () => {
             </div>
 
             {/* Quick Actions */}
-            <div className='grid gap-4 md:grid-cols-2 lg:grid-cols-5'>
+            <div className='grid gap-4 grid-cols-2 md:grid-cols-3 lg:grid-cols-5'>
                 <Button
                     onClick={() => setShowCreateUnit(true)}
                     className='h-20 flex-col gap-2'
                     disabled={canOnlyViewAndUpdateUnitMeta()}
                 >
                     <Plus className='h-6 w-6' />
-                    Create Unit
+                    <span className="text-xs text-center">Create Unit</span>
                 </Button>
                 <Button
                     onClick={() => setShowCreateCategory(true)}
@@ -263,7 +264,7 @@ const IndustryDetails = () => {
                     disabled={canOnlyViewAndUpdateUnitMeta()}
                 >
                     <Plus className='h-6 w-6' />
-                    Add Category
+                    <span className="text-xs text-center">Add Category</span>
                 </Button>
                 <Button
                     onClick={scrollToPermissions}
@@ -272,7 +273,7 @@ const IndustryDetails = () => {
                     disabled={canOnlyViewAndUpdateUnitMeta()}
                 >
                     <Users className='h-6 w-6' />
-                    Manage Permissions
+                    <span className="text-xs text-center">Manage Permissions</span>
                 </Button>
                 <Button
                     onClick={scrollToDataValidation}
@@ -280,7 +281,7 @@ const IndustryDetails = () => {
                     className='h-20 flex-col gap-2'
                 >
                     <CheckCircle className='h-6 w-6' />
-                    Data Validation
+                    <span className="text-xs text-center">Data Validation</span>
                 </Button>
                 <Button
                     onClick={scrollToUnitsMeta}
@@ -288,7 +289,7 @@ const IndustryDetails = () => {
                     className='h-20 flex-col gap-2'
                 >
                     <Settings className='h-6 w-6' />
-                    Edit Meta Data
+                    <span className="text-xs text-center">Edit Meta Data</span>
                 </Button>
             </div>
 
@@ -310,14 +311,14 @@ const IndustryDetails = () => {
             )}
 
             {/* Units Table */}
-            <Card>
+            <Card className="w-full">
                 <CardHeader>
                     <CardTitle>Units</CardTitle>
                     <CardDescription>
                         {hasFullAccess() ? 'Manage all units for this industry' : 'View units for this industry'}
                     </CardDescription>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="p-0 md:p-6">
                     <UnitsTable
                         units={industryDetails.units}
                         onEditUnit={handleEditUnit}
@@ -326,14 +327,14 @@ const IndustryDetails = () => {
             </Card>
 
             {/* Categories Table */}
-            <Card>
+            <Card className="w-full">
                 <CardHeader>
                     <CardTitle>Categories</CardTitle>
                     <CardDescription>
                         {hasFullAccess() ? 'Manage categories and subcategories' : 'View categories and subcategories'}
                     </CardDescription>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="p-0 md:p-6">
                     <CategoriesTable
                         categories={industryDetails.categories}
                         allUnits={industryDetails.units}
@@ -345,7 +346,7 @@ const IndustryDetails = () => {
 
             {/* Permissions Management - Only show for full access users */}
             {hasFullAccess() && (
-                <div ref={permissionsRef}>
+                <div ref={permissionsRef} className="w-full">
                     <Card>
                         <CardHeader>
                             <CardTitle>User Permissions</CardTitle>
@@ -361,7 +362,7 @@ const IndustryDetails = () => {
             )}
 
             {/* Data Validation Card - Show for all users */}
-            <div ref={dataValidationRef}>
+            <div ref={dataValidationRef} className="w-full">
                 <DataValidationCard
                     industryId={industryId!}
                     units={industryDetails.units.map((unit) => ({
@@ -372,7 +373,7 @@ const IndustryDetails = () => {
             </div>
 
             {/* Units Meta Management - Always show */}
-            <div ref={unitsMetaRef}>
+            <div ref={unitsMetaRef} className="w-full">
                 <UnitsMetaManager
                     industryId={industryId!}
                     units={industryDetails.units.map((unit) => ({
