@@ -52,6 +52,8 @@ export function EditUnitDialog({
 }: EditUnitDialogProps) {
     const { hasFullAccess } = useAuth();
     const [isLoading, setIsLoading] = useState(false);
+    const [availableUnits, setAvailableUnits] = useState<any[]>([]);
+    const [availableSubCategories, setAvailableSubCategories] = useState<string[]>([]);
     const [formData, setFormData] = useState({
         unitName: '',
         deviceId: '',
@@ -90,6 +92,48 @@ export function EditUnitDialog({
     const isStockUnit = unit?.standardCategoryId === 'STOCK_CATEGORY';
     const isVirtualNode = unit?.standardCategoryId === 'VIRTUAL_CATEGORY' || unit?.standardCategoryId === 'VIRTUAL_NODE';
     const isQualityUnit = unit?.standardCategoryId === 'QUALITY_CATEGORY';
+
+    // Fetch available units and subcategories from the current industry
+    useEffect(() => {
+        const fetchIndustryData = async () => {
+            if (!isVirtualNode || !industryId) return;
+
+            try {
+                const response = await fetch(`https://admin-aquagen-api-bfckdag2aydtegc2.southindia-01.azurewebsites.net/api/admin/industry/${industryId}`, {
+                    headers: {
+                        accept: 'application/json',
+                        Authorization: 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJmcmVzaCI6dHJ1ZSwiaWF0IjoxNzM0MzI2NDU2LCJqdGkiOiI0NmFhOTRhNS00MDY3LTQ0OWEtOWUxYy1kYTU5MWZkMDZhYmIiLCJ0eXBlIjoiYWNjZXNzIiwic3ViIjoiSU5URVJOQUwiLCJuYmYiOjE3MzQzMjY0NTYsImV4cCI6MTc2NTg2MjQ1NiwidXNlcklkIjoiSU5URVJOQUxfREVGQVVMVF92YXJ1biIsImVtYWlsIjoidmFydW5AYXF1YWdlbi5jb20iLCJ1c2VybmFtZSI6InZhcnVuIiwibG9naW5UeXBlIjoiQURNSU5fREVGQVVMVCIsInJvbGUiOiJ1c2VyIiwicGVybWlzc2lvbnMiOlsiU1VQRVJfVVNFUiJdfQ.GsEQUEHCyvAHgvcUDbrZfIclUQqoB6Z61Q8IltLqjiA',
+                    },
+                });
+
+                if (response.ok) {
+                    const industryData = await response.json();
+                    
+                    // Extract units from industry data
+                    if (industryData.units) {
+                        setAvailableUnits(industryData.units.filter((u: any) => u.unitId !== unit?.unitId));
+                    }
+
+                    // Extract subcategories from industry data
+                    if (industryData.categories) {
+                        const allSubCategories: string[] = [];
+                        industryData.categories.forEach((category: any) => {
+                            if (category.subCategories) {
+                                category.subCategories.forEach((subCat: any) => {
+                                    allSubCategories.push(subCat.subCategoryId);
+                                });
+                            }
+                        });
+                        setAvailableSubCategories(allSubCategories);
+                    }
+                }
+            } catch (error) {
+                console.error('Failed to fetch industry data:', error);
+            }
+        };
+
+        fetchIndustryData();
+    }, [isVirtualNode, industryId, unit?.unitId]);
 
     useEffect(() => {
         if (unit) {
@@ -240,51 +284,35 @@ export function EditUnitDialog({
         }));
     };
 
-    const addMetaUnit = () => {
-        if (!hasFullAccess()) return;
+    const addMetaUnit = (unitId: string) => {
+        if (!hasFullAccess() || formData.metaUnits.includes(unitId)) return;
         setFormData(prev => ({
             ...prev,
-            metaUnits: [...prev.metaUnits, '']
+            metaUnits: [...prev.metaUnits, unitId]
         }));
     };
 
-    const removeMetaUnit = (index: number) => {
+    const removeMetaUnit = (unitId: string) => {
         if (!hasFullAccess()) return;
         setFormData(prev => ({
             ...prev,
-            metaUnits: prev.metaUnits.filter((_, i) => i !== index)
+            metaUnits: prev.metaUnits.filter(id => id !== unitId)
         }));
     };
 
-    const updateMetaUnit = (index: number, value: string) => {
-        if (!hasFullAccess()) return;
+    const addMetaSubCategory = (subCategoryId: string) => {
+        if (!hasFullAccess() || formData.metaSubCategories.includes(subCategoryId)) return;
         setFormData(prev => ({
             ...prev,
-            metaUnits: prev.metaUnits.map((unit, i) => i === index ? value : unit)
+            metaSubCategories: [...prev.metaSubCategories, subCategoryId]
         }));
     };
 
-    const addMetaSubCategory = () => {
+    const removeMetaSubCategory = (subCategoryId: string) => {
         if (!hasFullAccess()) return;
         setFormData(prev => ({
             ...prev,
-            metaSubCategories: [...prev.metaSubCategories, '']
-        }));
-    };
-
-    const removeMetaSubCategory = (index: number) => {
-        if (!hasFullAccess()) return;
-        setFormData(prev => ({
-            ...prev,
-            metaSubCategories: prev.metaSubCategories.filter((_, i) => i !== index)
-        }));
-    };
-
-    const updateMetaSubCategory = (index: number, value: string) => {
-        if (!hasFullAccess()) return;
-        setFormData(prev => ({
-            ...prev,
-            metaSubCategories: prev.metaSubCategories.map((subCat, i) => i === index ? value : subCat)
+            metaSubCategories: prev.metaSubCategories.filter(id => id !== subCategoryId)
         }));
     };
 
@@ -348,9 +376,9 @@ export function EditUnitDialog({
     };
 
     const getMetaDescription = () => {
-        const units = formData.metaUnits.filter(u => u.trim()).join(' + ');
-        const subCategories = formData.metaSubCategories.filter(sc => sc.trim()).join(' + ');
-        return `units: ${units || 'none'}, subCategories: ${subCategories || 'none'}`;
+        const units = formData.metaUnits.join(' + ');
+        const subCategories = formData.metaSubCategories.join(' + ');
+        return `units: ${units || 'none'}\nsubCategories: ${subCategories || 'none'}`;
     };
 
     const tabsList = getTabsList();
@@ -666,40 +694,52 @@ export function EditUnitDialog({
                                 <div className='space-y-4'>
                                     <div className='p-4 bg-gray-50 rounded-lg'>
                                         <p className='text-sm text-gray-600 mb-2'>Description:</p>
-                                        <p className='font-mono text-sm'>{getMetaDescription()}</p>
+                                        <pre className='font-mono text-sm whitespace-pre-wrap'>{getMetaDescription()}</pre>
                                     </div>
                                     
                                     <div className='space-y-3'>
                                         <div className='flex items-center justify-between'>
                                             <Label>Units</Label>
                                             {!isReadOnly && (
-                                                <Button type="button" size="sm" onClick={addMetaUnit}>
-                                                    <Plus className="h-4 w-4 mr-1" />
-                                                    Add Unit
-                                                </Button>
+                                                <Select onValueChange={addMetaUnit}>
+                                                    <SelectTrigger className="w-48">
+                                                        <SelectValue placeholder="Add unit..." />
+                                                    </SelectTrigger>
+                                                    <SelectContent>
+                                                        {availableUnits
+                                                            .filter(u => !formData.metaUnits.includes(u.unitId))
+                                                            .map(unit => (
+                                                                <SelectItem key={unit.unitId} value={unit.unitId}>
+                                                                    {unit.unitName} ({unit.unitId})
+                                                                </SelectItem>
+                                                            ))}
+                                                    </SelectContent>
+                                                </Select>
                                             )}
                                         </div>
-                                        {formData.metaUnits.map((unitItem, index) => (
-                                            <div key={index} className='flex gap-2'>
-                                                <Input
-                                                    value={unitItem}
-                                                    onChange={(e) => updateMetaUnit(index, e.target.value)}
-                                                    placeholder='Enter unit ID'
-                                                    disabled={isReadOnly}
-                                                    className={isReadOnly ? 'bg-gray-100' : ''}
-                                                />
-                                                {!isReadOnly && (
-                                                    <Button
-                                                        type="button"
-                                                        size="sm"
-                                                        variant="outline"
-                                                        onClick={() => removeMetaUnit(index)}
-                                                    >
-                                                        <X className="h-4 w-4" />
-                                                    </Button>
-                                                )}
-                                            </div>
-                                        ))}
+                                        <div className='space-y-2'>
+                                            {formData.metaUnits.map((unitId) => {
+                                                const unitInfo = availableUnits.find(u => u.unitId === unitId);
+                                                return (
+                                                    <div key={unitId} className='flex items-center justify-between p-3 border rounded-lg'>
+                                                        <div>
+                                                            <span className='font-medium'>{unitInfo?.unitName || unitId}</span>
+                                                            <span className='text-sm text-gray-500 ml-2'>({unitId})</span>
+                                                        </div>
+                                                        {!isReadOnly && (
+                                                            <Button
+                                                                type="button"
+                                                                size="sm"
+                                                                variant="outline"
+                                                                onClick={() => removeMetaUnit(unitId)}
+                                                            >
+                                                                <X className="h-4 w-4" />
+                                                            </Button>
+                                                        )}
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
                                     </div>
 
                                     <div className='space-y-2'>
@@ -719,33 +759,39 @@ export function EditUnitDialog({
                                         <div className='flex items-center justify-between'>
                                             <Label>Sub Categories</Label>
                                             {!isReadOnly && (
-                                                <Button type="button" size="sm" onClick={addMetaSubCategory}>
-                                                    <Plus className="h-4 w-4 mr-1" />
-                                                    Add Sub Category
-                                                </Button>
+                                                <Select onValueChange={addMetaSubCategory}>
+                                                    <SelectTrigger className="w-48">
+                                                        <SelectValue placeholder="Add sub category..." />
+                                                    </SelectTrigger>
+                                                    <SelectContent>
+                                                        {availableSubCategories
+                                                            .filter(sc => !formData.metaSubCategories.includes(sc))
+                                                            .map(subCat => (
+                                                                <SelectItem key={subCat} value={subCat}>
+                                                                    {subCat}
+                                                                </SelectItem>
+                                                            ))}
+                                                    </SelectContent>
+                                                </Select>
                                             )}
                                         </div>
-                                        {formData.metaSubCategories.map((subCat, index) => (
-                                            <div key={index} className='flex gap-2'>
-                                                <Input
-                                                    value={subCat}
-                                                    onChange={(e) => updateMetaSubCategory(index, e.target.value)}
-                                                    placeholder='Enter sub category'
-                                                    disabled={isReadOnly}
-                                                    className={isReadOnly ? 'bg-gray-100' : ''}
-                                                />
-                                                {!isReadOnly && (
-                                                    <Button
-                                                        type="button"
-                                                        size="sm"
-                                                        variant="outline"
-                                                        onClick={() => removeMetaSubCategory(index)}
-                                                    >
-                                                        <X className="h-4 w-4" />
-                                                    </Button>
-                                                )}
-                                            </div>
-                                        ))}
+                                        <div className='space-y-2'>
+                                            {formData.metaSubCategories.map((subCatId) => (
+                                                <div key={subCatId} className='flex items-center justify-between p-3 border rounded-lg'>
+                                                    <span className='font-medium'>{subCatId}</span>
+                                                    {!isReadOnly && (
+                                                        <Button
+                                                            type="button"
+                                                            size="sm"
+                                                            variant="outline"
+                                                            onClick={() => removeMetaSubCategory(subCatId)}
+                                                        >
+                                                            <X className="h-4 w-4" />
+                                                        </Button>
+                                                    )}
+                                                </div>
+                                            ))}
+                                        </div>
                                     </div>
                                 </div>
                             </TabsContent>
