@@ -58,6 +58,7 @@ export function EditUnitDialog({
     const [formData, setFormData] = useState({
         unitName: '',
         deviceId: '',
+        unitType: '',
         flowFactor: 1,
         unitThreshold: 0,
         isDeployed: false,
@@ -93,6 +94,7 @@ export function EditUnitDialog({
     const isStockUnit = unit?.standardCategoryId === 'STOCK_CATEGORY';
     const isVirtualNode = unit?.standardCategoryId === 'VIRTUAL_CATEGORY' || unit?.standardCategoryId === 'VIRTUAL_NODE';
     const isQualityUnit = unit?.standardCategoryId === 'QUALITY_CATEGORY';
+    const isEnergyUnit = unit?.standardCategoryId === 'ENERGY_CATEGORY';
 
     // Fetch industry data
     useEffect(() => {
@@ -124,6 +126,7 @@ export function EditUnitDialog({
             setFormData({
                 unitName: unit.unitName || '',
                 deviceId: unit.deviceId || '',
+                unitType: unit.unitType || '',
                 flowFactor: unit.flowFactor || 1,
                 unitThreshold: unit.unitThreshold || 0,
                 isDeployed: unit.isDeployed || false,
@@ -184,6 +187,11 @@ export function EditUnitDialog({
                     streamId: formData.streamId,
                 },
             };
+
+            // Add unitType for energy units
+            if (isEnergyUnit) {
+                unitModel.unitType = formData.unitType;
+            }
 
             // Add flow factor for non-stock units
             if (!isStockUnit) {
@@ -421,7 +429,21 @@ export function EditUnitDialog({
                                         className={isReadOnly ? 'bg-gray-100' : ''}
                                     />
                                 </div>
-                                {!isStockUnit && (
+                                {isEnergyUnit && (
+                                    <div className='space-y-2'>
+                                        <Label htmlFor='unitType'>Unit Type</Label>
+                                        <Input
+                                            id='unitType'
+                                            name='unitType'
+                                            value={formData.unitType}
+                                            onChange={handleInputChange}
+                                            placeholder='Enter unit type (e.g., ENERGY)'
+                                            disabled={isReadOnly}
+                                            className={isReadOnly ? 'bg-gray-100' : ''}
+                                        />
+                                    </div>
+                                )}
+                                {!isStockUnit && !isEnergyUnit && (
                                     <div className='space-y-2'>
                                         <Label htmlFor='flowFactor'>Flow Factor</Label>
                                         <Input
