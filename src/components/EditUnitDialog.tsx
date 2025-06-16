@@ -376,9 +376,9 @@ export function EditUnitDialog({
     };
 
     const getMetaDescription = () => {
-        const units = formData.metaUnits.join(' + ');
-        const subCategories = formData.metaSubCategories.join(' + ');
-        return `units: ${units || 'none'}\nsubCategories: ${subCategories || 'none'}`;
+        const unitsText = formData.metaUnits.length > 0 ? formData.metaUnits.map(id => `{${id}}`).join(' + ') : 'none';
+        const subCategoriesText = formData.metaSubCategories.length > 0 ? formData.metaSubCategories.map(id => `{${id}}`).join(' + ') : 'none';
+        return `For units: ${unitsText}\nFor subCategories: ${subCategoriesText}`;
     };
 
     const tabsList = getTabsList();
@@ -693,104 +693,85 @@ export function EditUnitDialog({
                             <TabsContent value='meta' className='space-y-4'>
                                 <div className='space-y-4'>
                                     <div className='p-4 bg-gray-50 rounded-lg'>
-                                        <p className='text-sm text-gray-600 mb-2'>Description:</p>
-                                        <pre className='font-mono text-sm whitespace-pre-wrap'>{getMetaDescription()}</pre>
+                                        <p className='text-sm font-medium text-gray-700 mb-2'>Description (How to write calculations):</p>
+                                        <pre className='font-mono text-sm whitespace-pre-wrap text-gray-600'>{getMetaDescription()}</pre>
                                     </div>
                                     
-                                    <div className='space-y-3'>
-                                        <div className='flex items-center justify-between'>
-                                            <Label>Units</Label>
-                                            {!isReadOnly && (
-                                                <Select onValueChange={addMetaUnit}>
-                                                    <SelectTrigger className="w-48">
-                                                        <SelectValue placeholder="Add unit..." />
-                                                    </SelectTrigger>
-                                                    <SelectContent>
-                                                        {availableUnits
-                                                            .filter(u => !formData.metaUnits.includes(u.unitId))
-                                                            .map(unit => (
-                                                                <SelectItem key={unit.unitId} value={unit.unitId}>
-                                                                    {unit.unitName} ({unit.unitId})
-                                                                </SelectItem>
-                                                            ))}
-                                                    </SelectContent>
-                                                </Select>
-                                            )}
-                                        </div>
-                                        <div className='space-y-2'>
-                                            {formData.metaUnits.map((unitId) => {
-                                                const unitInfo = availableUnits.find(u => u.unitId === unitId);
-                                                return (
-                                                    <div key={unitId} className='flex items-center justify-between p-3 border rounded-lg'>
-                                                        <div>
-                                                            <span className='font-medium'>{unitInfo?.unitName || unitId}</span>
-                                                            <span className='text-sm text-gray-500 ml-2'>({unitId})</span>
+                                    <div className='space-y-6'>
+                                        <div className='space-y-3'>
+                                            <Label className='text-base font-medium'>Units from Current Industry</Label>
+                                            <p className='text-sm text-gray-600'>Select units to include in calculations:</p>
+                                            
+                                            <div className='max-h-40 overflow-y-auto border rounded-lg p-3 space-y-2'>
+                                                {availableUnits.length > 0 ? (
+                                                    availableUnits.map(unit => (
+                                                        <div key={unit.unitId} className='flex items-center space-x-3 p-2 hover:bg-gray-50 rounded'>
+                                                            <Checkbox
+                                                                checked={formData.metaUnits.includes(unit.unitId)}
+                                                                onCheckedChange={(checked) => {
+                                                                    if (!isReadOnly) {
+                                                                        if (checked) {
+                                                                            addMetaUnit(unit.unitId);
+                                                                        } else {
+                                                                            removeMetaUnit(unit.unitId);
+                                                                        }
+                                                                    }
+                                                                }}
+                                                                disabled={isReadOnly}
+                                                            />
+                                                            <div className='flex-1'>
+                                                                <span className='font-medium text-sm'>{unit.unitName}</span>
+                                                                <span className='text-xs text-gray-500 ml-2'>({unit.unitId})</span>
+                                                            </div>
                                                         </div>
-                                                        {!isReadOnly && (
-                                                            <Button
-                                                                type="button"
-                                                                size="sm"
-                                                                variant="outline"
-                                                                onClick={() => removeMetaUnit(unitId)}
-                                                            >
-                                                                <X className="h-4 w-4" />
-                                                            </Button>
-                                                        )}
-                                                    </div>
-                                                );
-                                            })}
+                                                    ))
+                                                ) : (
+                                                    <p className='text-sm text-gray-500 italic'>No units available in current industry</p>
+                                                )}
+                                            </div>
                                         </div>
-                                    </div>
 
-                                    <div className='space-y-2'>
-                                        <Label htmlFor='metaCalculations'>Calculations</Label>
-                                        <Input
-                                            id='metaCalculations'
-                                            name='metaCalculations'
-                                            value={formData.metaCalculations}
-                                            onChange={handleInputChange}
-                                            placeholder='Enter calculation formula'
-                                            disabled={isReadOnly}
-                                            className={isReadOnly ? 'bg-gray-100' : ''}
-                                        />
-                                    </div>
-
-                                    <div className='space-y-3'>
-                                        <div className='flex items-center justify-between'>
-                                            <Label>Sub Categories</Label>
-                                            {!isReadOnly && (
-                                                <Select onValueChange={addMetaSubCategory}>
-                                                    <SelectTrigger className="w-48">
-                                                        <SelectValue placeholder="Add sub category..." />
-                                                    </SelectTrigger>
-                                                    <SelectContent>
-                                                        {availableSubCategories
-                                                            .filter(sc => !formData.metaSubCategories.includes(sc))
-                                                            .map(subCat => (
-                                                                <SelectItem key={subCat} value={subCat}>
-                                                                    {subCat}
-                                                                </SelectItem>
-                                                            ))}
-                                                    </SelectContent>
-                                                </Select>
-                                            )}
-                                        </div>
                                         <div className='space-y-2'>
-                                            {formData.metaSubCategories.map((subCatId) => (
-                                                <div key={subCatId} className='flex items-center justify-between p-3 border rounded-lg'>
-                                                    <span className='font-medium'>{subCatId}</span>
-                                                    {!isReadOnly && (
-                                                        <Button
-                                                            type="button"
-                                                            size="sm"
-                                                            variant="outline"
-                                                            onClick={() => removeMetaSubCategory(subCatId)}
-                                                        >
-                                                            <X className="h-4 w-4" />
-                                                        </Button>
-                                                    )}
-                                                </div>
-                                            ))}
+                                            <Label htmlFor='metaCalculations' className='text-base font-medium'>Calculations</Label>
+                                            <Input
+                                                id='metaCalculations'
+                                                name='metaCalculations'
+                                                value={formData.metaCalculations}
+                                                onChange={handleInputChange}
+                                                placeholder='Enter calculation formula (e.g., {unit1} + {unit2} - {subCategory1})'
+                                                disabled={isReadOnly}
+                                                className={isReadOnly ? 'bg-gray-100' : ''}
+                                            />
+                                        </div>
+
+                                        <div className='space-y-3'>
+                                            <Label className='text-base font-medium'>Sub Categories from Current Industry</Label>
+                                            <p className='text-sm text-gray-600'>Select subcategories to include in calculations:</p>
+                                            
+                                            <div className='max-h-40 overflow-y-auto border rounded-lg p-3 space-y-2'>
+                                                {availableSubCategories.length > 0 ? (
+                                                    availableSubCategories.map(subCat => (
+                                                        <div key={subCat} className='flex items-center space-x-3 p-2 hover:bg-gray-50 rounded'>
+                                                            <Checkbox
+                                                                checked={formData.metaSubCategories.includes(subCat)}
+                                                                onCheckedChange={(checked) => {
+                                                                    if (!isReadOnly) {
+                                                                        if (checked) {
+                                                                            addMetaSubCategory(subCat);
+                                                                        } else {
+                                                                            removeMetaSubCategory(subCat);
+                                                                        }
+                                                                    }
+                                                                }}
+                                                                disabled={isReadOnly}
+                                                            />
+                                                            <span className='font-medium text-sm'>{subCat}</span>
+                                                        </div>
+                                                    ))
+                                                ) : (
+                                                    <p className='text-sm text-gray-500 italic'>No subcategories available in current industry</p>
+                                                )}
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
