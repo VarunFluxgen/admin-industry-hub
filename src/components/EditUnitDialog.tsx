@@ -324,10 +324,16 @@ export function EditUnitDialog({
     const updateQualityParam = (paramKey: string, field: string, value: any) => {
         if (!hasFullAccess()) return;
         
-        setFormData(prev => ({
-            ...prev,
-            [field]: { ...prev[field as keyof typeof prev], [paramKey]: value }
-        }));
+        setFormData(prev => {
+            const currentFieldValue = prev[field as keyof typeof prev];
+            // Ensure we're spreading from an object type
+            const safeFieldValue = typeof currentFieldValue === 'object' && currentFieldValue !== null ? currentFieldValue : {};
+            
+            return {
+                ...prev,
+                [field]: { ...safeFieldValue, [paramKey]: value }
+            };
+        });
     };
 
     if (!unit) return null;
