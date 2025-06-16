@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import {
     Dialog,
     DialogContent,
-    DialogDescription,
     DialogHeader,
     DialogTitle,
 } from '@/components/ui/dialog';
@@ -53,6 +52,8 @@ export function EditUnitDialog({
     const { hasFullAccess } = useAuth();
     const [isLoading, setIsLoading] = useState(false);
     const [industryData, setIndustryData] = useState<any>(null);
+    const [newUnitInput, setNewUnitInput] = useState('');
+    const [newSubCategoryInput, setNewSubCategoryInput] = useState('');
     const [formData, setFormData] = useState({
         unitName: '',
         deviceId: '',
@@ -266,12 +267,13 @@ export function EditUnitDialog({
         }));
     };
 
-    const addMetaUnit = (unitId: string) => {
-        if (!hasFullAccess() || formData.metaUnits.includes(unitId)) return;
+    const addMetaUnit = () => {
+        if (!hasFullAccess() || !newUnitInput.trim() || formData.metaUnits.includes(newUnitInput.trim())) return;
         setFormData(prev => ({
             ...prev,
-            metaUnits: [...prev.metaUnits, unitId]
+            metaUnits: [...prev.metaUnits, newUnitInput.trim()]
         }));
+        setNewUnitInput('');
     };
 
     const removeMetaUnit = (unitId: string) => {
@@ -282,12 +284,13 @@ export function EditUnitDialog({
         }));
     };
 
-    const addMetaSubCategory = (subCategoryId: string) => {
-        if (!hasFullAccess() || formData.metaSubCategories.includes(subCategoryId)) return;
+    const addMetaSubCategory = () => {
+        if (!hasFullAccess() || !newSubCategoryInput.trim() || formData.metaSubCategories.includes(newSubCategoryInput.trim())) return;
         setFormData(prev => ({
             ...prev,
-            metaSubCategories: [...prev.metaSubCategories, subCategoryId]
+            metaSubCategories: [...prev.metaSubCategories, newSubCategoryInput.trim()]
         }));
+        setNewSubCategoryInput('');
     };
 
     const removeMetaSubCategory = (subCategoryId: string) => {
@@ -356,15 +359,6 @@ export function EditUnitDialog({
         if (isQualityUnit) tabs.push('params');
         return tabs;
     };
-
-    // Extract available units (excluding current unit)
-    const availableUnits = industryData?.units?.filter((u: any) => u.unitId !== unit?.unitId) || [];
-
-    // Extract all subcategories from categories
-    const availableSubCategories = industryData?.categories ? 
-        Object.values(industryData.categories).flatMap((category: any) => 
-            category.subCategories?.map((subCat: any) => subCat.id) || []
-        ) : [];
 
     const tabsList = getTabsList();
 
@@ -678,47 +672,45 @@ export function EditUnitDialog({
                             <TabsContent value='meta' className='space-y-4'>
                                 <div className='space-y-6'>
                                     <div className='space-y-3'>
-                                        <div className='flex items-center justify-between'>
-                                            <Label className='text-base font-medium'>Units</Label>
-                                            {!isReadOnly && (
-                                                <Select onValueChange={addMetaUnit}>
-                                                    <SelectTrigger className="w-48">
-                                                        <SelectValue placeholder="Add unit..." />
-                                                    </SelectTrigger>
-                                                    <SelectContent>
-                                                        {availableUnits.filter((u: any) => !formData.metaUnits.includes(u.unitId)).map((unit: any) => (
-                                                            <SelectItem key={unit.unitId} value={unit.unitId}>
-                                                                {unit.unitName} ({unit.unitId})
-                                                            </SelectItem>
-                                                        ))}
-                                                    </SelectContent>
-                                                </Select>
-                                            )}
-                                        </div>
+                                        <Label className='text-base font-medium'>Units</Label>
+                                        
+                                        {!isReadOnly && (
+                                            <div className='flex gap-2'>
+                                                <Input
+                                                    value={newUnitInput}
+                                                    onChange={(e) => setNewUnitInput(e.target.value)}
+                                                    placeholder='Enter unit ID'
+                                                    className='flex-1'
+                                                />
+                                                <Button
+                                                    type="button"
+                                                    onClick={addMetaUnit}
+                                                    size="sm"
+                                                >
+                                                    <Plus className="h-4 w-4" />
+                                                    Add
+                                                </Button>
+                                            </div>
+                                        )}
                                         
                                         <div className='min-h-20 border rounded-lg p-3'>
                                             {formData.metaUnits.length > 0 ? (
                                                 <div className='space-y-2'>
-                                                    {formData.metaUnits.map((unitId) => {
-                                                        const unitData = availableUnits.find((u: any) => u.unitId === unitId);
-                                                        return (
-                                                            <div key={unitId} className='flex items-center justify-between p-2 bg-gray-50 rounded'>
-                                                                <span className='font-medium text-sm'>
-                                                                    {unitData?.unitName || unitId} ({unitId})
-                                                                </span>
-                                                                {!isReadOnly && (
-                                                                    <Button
-                                                                        type="button"
-                                                                        size="sm"
-                                                                        variant="outline"
-                                                                        onClick={() => removeMetaUnit(unitId)}
-                                                                    >
-                                                                        <X className="h-4 w-4" />
-                                                                    </Button>
-                                                                )}
-                                                            </div>
-                                                        );
-                                                    })}
+                                                    {formData.metaUnits.map((unitId) => (
+                                                        <div key={unitId} className='flex items-center justify-between p-2 bg-gray-50 rounded'>
+                                                            <span className='font-medium text-sm'>{unitId}</span>
+                                                            {!isReadOnly && (
+                                                                <Button
+                                                                    type="button"
+                                                                    size="sm"
+                                                                    variant="outline"
+                                                                    onClick={() => removeMetaUnit(unitId)}
+                                                                >
+                                                                    <X className="h-4 w-4" />
+                                                                </Button>
+                                                            )}
+                                                        </div>
+                                                    ))}
                                                 </div>
                                             ) : (
                                                 <p className='text-sm text-gray-500 italic text-center py-4'>No units added</p>
@@ -740,23 +732,26 @@ export function EditUnitDialog({
                                     </div>
 
                                     <div className='space-y-3'>
-                                        <div className='flex items-center justify-between'>
-                                            <Label className='text-base font-medium'>Sub Categories</Label>
-                                            {!isReadOnly && (
-                                                <Select onValueChange={addMetaSubCategory}>
-                                                    <SelectTrigger className="w-48">
-                                                        <SelectValue placeholder="Add subcategory..." />
-                                                    </SelectTrigger>
-                                                    <SelectContent>
-                                                        {availableSubCategories.filter((subCat: string) => !formData.metaSubCategories.includes(subCat)).map((subCat: string) => (
-                                                            <SelectItem key={subCat} value={subCat}>
-                                                                {subCat}
-                                                            </SelectItem>
-                                                        ))}
-                                                    </SelectContent>
-                                                </Select>
-                                            )}
-                                        </div>
+                                        <Label className='text-base font-medium'>Sub Categories</Label>
+                                        
+                                        {!isReadOnly && (
+                                            <div className='flex gap-2'>
+                                                <Input
+                                                    value={newSubCategoryInput}
+                                                    onChange={(e) => setNewSubCategoryInput(e.target.value)}
+                                                    placeholder='Enter subcategory ID'
+                                                    className='flex-1'
+                                                />
+                                                <Button
+                                                    type="button"
+                                                    onClick={addMetaSubCategory}
+                                                    size="sm"
+                                                >
+                                                    <Plus className="h-4 w-4" />
+                                                    Add
+                                                </Button>
+                                            </div>
+                                        )}
                                         
                                         <div className='min-h-20 border rounded-lg p-3'>
                                             {formData.metaSubCategories.length > 0 ? (
