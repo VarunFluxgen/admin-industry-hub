@@ -1,4 +1,3 @@
-
 import { useState, useMemo } from 'react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
@@ -7,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Edit, Search, ArrowUpDown, Download } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import { useToast } from "@/hooks/use-toast";
 import * as XLSX from 'xlsx';
 import {
   Pagination,
@@ -34,10 +34,12 @@ interface UnitsTableProps {
 
 export function UnitsTable({ units, onEditUnit }: UnitsTableProps) {
   const { hasFullAccess } = useAuth();
+  const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState('');
   const [sortField, setSortField] = useState<keyof Unit>('unitName');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
   const [currentPage, setCurrentPage] = useState(1);
+  const [isDownloading, setIsDownloading] = useState(false);
   const itemsPerPage = 10;
 
   const filteredAndSortedUnits = useMemo(() => {
@@ -96,41 +98,182 @@ export function UnitsTable({ units, onEditUnit }: UnitsTableProps) {
     setCurrentPage(1); // Reset to first page when sorting
   };
 
-  const handleDownloadExcel = () => {
+  const fetchDetailedUnitData = async (unitId: string) => {
+    try {
+      const response = await fetch(
+        `https://admin-aquagen-api-bfckdag2aydtegc2.southindia-01.azurewebsites.net/api/admin/unit/${unitId}/details`,
+        {
+          headers: {
+            accept: 'application/json',
+            Authorization: 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJmcmVzaCI6dHJ1ZSwiaWF0IjoxNzM0MzI2NDU2LCJqdGkiOiI0NmFhOTRhNS00MDY3LTQ0OWEtOWUxYy1kYTU5MWZkMDZhYmIiLCJ0eXBlIjoiYWNjZXNzIiwic3ViIjoiSU5URVJOQUwiLCJuYmYiOjE3MzQzMjY0NTYsImV4cCI6MTc2NTg2MjQ1NiwidXNlcklkIjoiSU5URVJOQUxfREVGQVVMVF92YXJ1biIsImVtYWlsIjoidmFydW5AYXF1YWdlbi5jb20iLCJ1c2VybmFtZSI6InZhcnVuIiwibG9naW5UeXBlIjoiQURNSU5fREVGQVVMVCIsInJvbGUiOiJ1c2VyIiwicGVybWlzc2lvbnMiOlsiU1VQRVJfVVNFUiJdfQ.GsEQUEHCyvAHgvcUDbrZfIclUQqoB6Z61Q8IltLqjiA'
+          }
+        }
+      );
+
+      if (response.ok) {
+        return await response.json();
+      } else {
+        console.warn(`Failed to fetch detailed data for unit ${unitId}`);
+        return null;
+      }
+    } catch (error) {
+      console.error(`Error fetching detailed data for unit ${unitId}:`, error);
+      return null;
+    }
+  };
+
+  const handleDownloadExcel = async () => {
     if (!units || units.length === 0) {
       return;
     }
 
-    // Export ALL units data, not just filtered/paginated data
-    const excelData = units.map(unit => ({
-      'Unit ID': unit.unitId,
-      'Unit Name': unit.unitName,
-      'Unit Type': unit.unitType,
-      'Category': unit.standardCategoryId,
-      'Status': unit.isDeployed ? 'Deployed' : 'Not Deployed',
-      'Flow Factor': unit.flowFactor,
-      'Device ID': unit.deviceId
-    }));
+    setIsDownloading(true);
+    
+    try {
+      toast({
+        title: 'Preparing Download',
+        description: 'Fetching detailed unit data...',
+      });
 
-    // Create workbook and worksheet
-    const wb = XLSX.utils.book_new();
-    const ws = XLSX.utils.json_to_sheet(excelData);
+      // Fetch detailed data for all units
+      const detailedUnitsData = await Promise.all(
+        units.map(async (unit) => {
+          const detailedData = await fetchDetailedUnitData(unit.unitId);
+          return {
+            basicData: unit,
+            detailedData: detailedData
+          };
+        })
+      );
 
-    // Auto-size columns
-    const colWidths = Object.keys(excelData[0] || {}).map(key => ({
-      wch: Math.max(key.length, 15)
-    }));
-    ws['!cols'] = colWidths;
+      // Prepare Excel data with all available information
+      const excelData = detailedUnitsData.map(({ basicData, detailedData }) => {
+        const baseData = {
+          'Unit ID': basicData.unitId,
+          'Unit Name': basicData.unitName,
+          'Unit Type': basicData.unitType,
+          'Category': basicData.standardCategoryId,
+          'Status': basicData.isDeployed ? 'Deployed' : 'Not Deployed',
+          'Flow Factor': basicData.flowFactor,
+          'Device ID': basicData.deviceId
+        };
 
-    // Add worksheet to workbook
-    XLSX.utils.book_append_sheet(wb, ws, 'All Units Data');
+        // Add detailed data if available
+        if (detailedData) {
+          // Add IoT Hub configuration data
+          if (detailedData.iothubConfig) {
+            baseData['IoT Hub Device ID'] = detailedData.iothubConfig.iothubdeviceId || 'N/A';
+            baseData['IoT Hub Device Type'] = detailedData.iothubConfig.iothubdeviceType || 'N/A';
+            baseData['Slave ID'] = detailedData.iothubConfig.slaveId || 'N/A';
+            baseData['Meter Type'] = detailedData.iothubConfig.metertype || 'N/A';
+            baseData['Stream ID'] = detailedData.iothubConfig.streamId || 'N/A';
+            
+            // Add tank-specific settings
+            if (detailedData.iothubConfig.tankHeight !== undefined) {
+              baseData['Tank Height'] = detailedData.iothubConfig.tankHeight;
+            }
+            if (detailedData.iothubConfig.sensorHeight !== undefined) {
+              baseData['Sensor Height'] = detailedData.iothubConfig.sensorHeight;
+            }
+          }
 
-    // Generate filename with current timestamp
-    const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
-    const filename = `all_units_data_${timestamp}.xlsx`;
+          // Add unit-specific settings
+          if (detailedData.unitThreshold !== undefined) {
+            baseData['Unit Threshold'] = detailedData.unitThreshold;
+          }
+          if (detailedData.alertEnabled !== undefined) {
+            baseData['Alert Enabled'] = typeof detailedData.alertEnabled === 'object' 
+              ? JSON.stringify(detailedData.alertEnabled)
+              : detailedData.alertEnabled;
+          }
+          if (detailedData.interpoaltionDisabled !== undefined) {
+            baseData['Interpolation Disabled'] = detailedData.interpoaltionDisabled;
+          }
+          if (detailedData.height !== undefined) {
+            baseData['Height'] = detailedData.height;
+          }
+          if (detailedData.maxCapacity !== undefined) {
+            baseData['Max Capacity'] = detailedData.maxCapacity;
+          }
+          if (detailedData.createdTime) {
+            baseData['Created Time'] = detailedData.createdTime;
+          }
 
-    // Download the file
-    XLSX.writeFile(wb, filename);
+          // Add quality parameters for quality units
+          if (detailedData.params && Array.isArray(detailedData.params)) {
+            baseData['Quality Parameters'] = detailedData.params.join(', ');
+          }
+          if (detailedData.siUnit && typeof detailedData.siUnit === 'object') {
+            baseData['SI Units'] = JSON.stringify(detailedData.siUnit);
+          }
+          if (detailedData.lowThreshold && typeof detailedData.lowThreshold === 'object') {
+            baseData['Low Thresholds'] = JSON.stringify(detailedData.lowThreshold);
+          }
+          if (detailedData.highThreshold && typeof detailedData.highThreshold === 'object') {
+            baseData['High Thresholds'] = JSON.stringify(detailedData.highThreshold);
+          }
+
+          // Add virtual unit metadata
+          if (detailedData.meta && typeof detailedData.meta === 'object') {
+            if (detailedData.meta.units) {
+              baseData['Virtual Units'] = Array.isArray(detailedData.meta.units) 
+                ? detailedData.meta.units.join(', ')
+                : detailedData.meta.units;
+            }
+            if (detailedData.meta.calculations) {
+              baseData['Calculations'] = detailedData.meta.calculations;
+            }
+            if (detailedData.meta.subCategories) {
+              baseData['Sub Categories'] = Array.isArray(detailedData.meta.subCategories)
+                ? detailedData.meta.subCategories.join(', ')
+                : detailedData.meta.subCategories;
+            }
+          }
+
+          // Add manual meter type for manual units
+          if (detailedData.manualMeterType) {
+            baseData['Manual Meter Type'] = detailedData.manualMeterType;
+          }
+        }
+
+        return baseData;
+      });
+
+      // Create workbook and worksheet
+      const wb = XLSX.utils.book_new();
+      const ws = XLSX.utils.json_to_sheet(excelData);
+
+      // Auto-size columns
+      const colWidths = Object.keys(excelData[0] || {}).map(key => ({
+        wch: Math.max(key.length, 15)
+      }));
+      ws['!cols'] = colWidths;
+
+      // Add worksheet to workbook
+      XLSX.utils.book_append_sheet(wb, ws, 'Complete Units Data');
+
+      // Generate filename with current timestamp
+      const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
+      const filename = `complete_units_data_${timestamp}.xlsx`;
+
+      // Download the file
+      XLSX.writeFile(wb, filename);
+
+      toast({
+        title: 'Download Complete',
+        description: `Downloaded complete data for ${units.length} units`,
+      });
+
+    } catch (error) {
+      console.error('Error downloading Excel file:', error);
+      toast({
+        title: 'Download Failed',
+        description: 'Failed to download the Excel file. Please try again.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsDownloading(false);
+    }
   };
 
   const handlePageChange = (page: number) => {
@@ -160,7 +303,7 @@ export function UnitsTable({ units, onEditUnit }: UnitsTableProps) {
             value={searchTerm}
             onChange={(e) => {
               setSearchTerm(e.target.value);
-              setCurrentPage(1); // Reset to first page when searching
+              setCurrentPage(1);
             }}
             className="pl-10"
           />
@@ -189,11 +332,11 @@ export function UnitsTable({ units, onEditUnit }: UnitsTableProps) {
           onClick={handleDownloadExcel}
           variant="outline"
           size="sm"
-          disabled={!units || units.length === 0}
+          disabled={!units || units.length === 0 || isDownloading}
           className="shrink-0"
         >
           <Download className="h-4 w-4 mr-2" />
-          Download All Data
+          {isDownloading ? 'Downloading...' : 'Download Complete Data'}
         </Button>
       </div>
 
