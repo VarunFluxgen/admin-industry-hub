@@ -57,7 +57,7 @@ interface UnitMeta {
     networkProvider: string;
     simNumber: string;
     mobileNumber: string;
-    descripption: string;
+    description: string;
     problemsFaced: string;
     remarks: string;
     imageUrl: string[] | string;
@@ -243,7 +243,7 @@ export function UnitsMetaManager({ industryId, units }: UnitsMetaManagerProps) {
                 networkProvider: editingRecord.networkProvider,
                 simNumber: editingRecord.simNumber,
                 mobileNumber: editingRecord.mobileNumber,
-                descripption: editingRecord.descripption,
+                description: editingRecord.description,
                 problemsFaced: editingRecord.problemsFaced,
                 remarks: editingRecord.remarks,
                 imageUrls: Array.isArray(editingRecord.imageUrl)
@@ -468,7 +468,7 @@ export function UnitsMetaManager({ industryId, units }: UnitsMetaManagerProps) {
                                     'slaveId',
                                     'simNumber',
                                     'mobileNumber',
-                                    'descripption',
+                                    'description',
                                     'problemsFaced',
                                     'remarks',
                                 ].map((field) => (
