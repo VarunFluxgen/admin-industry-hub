@@ -75,7 +75,6 @@ export function EditUnitDialog({
         streamId: '',
         tankHeight: 0,
         sensorHeight: 0,
-        anomaly: 0,
         // Virtual node meta
         metaUnits: [] as string[],
         metaCalculations: '',
@@ -143,7 +142,6 @@ export function EditUnitDialog({
                 streamId: unit.iothubConfig?.streamId || '',
                 tankHeight: unit.iothubConfig?.tankHeight || 0,
                 sensorHeight: unit.iothubConfig?.sensorHeight || 0,
-                anomaly: unit.iothubConfig?.anomaly || 0,
                 // Virtual node meta
                 metaUnits: unit.meta?.units || [],
                 metaCalculations: unit.meta?.calculations || '',
@@ -188,13 +186,14 @@ export function EditUnitDialog({
                 },
             };
 
-            // Add unitType for energy units
+            // Add unitType and flowFactor for energy units
             if (isEnergyUnit) {
                 unitModel.unitType = formData.unitType;
+                unitModel.flowFactor = formData.flowFactor;
             }
 
-            // Add flow factor for non-stock units
-            if (!isStockUnit) {
+            // Add flow factor for non-stock and non-energy units
+            if (!isStockUnit && !isEnergyUnit) {
                 unitModel.flowFactor = formData.flowFactor;
             }
 
@@ -204,7 +203,6 @@ export function EditUnitDialog({
                 unitModel.maxCapacity = formData.maxCapacity;
                 unitModel.iothubConfig.tankHeight = formData.tankHeight;
                 unitModel.iothubConfig.sensorHeight = formData.sensorHeight;
-                unitModel.iothubConfig.anomaly = formData.anomaly;
             }
 
             // Add virtual node meta
@@ -438,12 +436,15 @@ export function EditUnitDialog({
                                             value={formData.unitType}
                                             onChange={handleInputChange}
                                             placeholder='Enter unit type (e.g., ENERGY)'
-                                            disabled
+                                            disabled={isReadOnly}
                                             className={isReadOnly ? 'bg-gray-100' : ''}
                                         />
                                     </div>
                                 )}
-                                {!isStockUnit && !isEnergyUnit && (
+                            </div>
+                            
+                            <div className='grid grid-cols-2 gap-4'>
+                                {(isEnergyUnit || (!isStockUnit && !isEnergyUnit)) && (
                                     <div className='space-y-2'>
                                         <Label htmlFor='flowFactor'>Flow Factor</Label>
                                         <Input
@@ -458,6 +459,19 @@ export function EditUnitDialog({
                                         />
                                     </div>
                                 )}
+                                <div className='space-y-2'>
+                                    <Label htmlFor='unitThreshold'>Unit Threshold</Label>
+                                    <Input
+                                        id='unitThreshold'
+                                        name='unitThreshold'
+                                        type='number'
+                                        value={formData.unitThreshold}
+                                        onChange={handleInputChange}
+                                        min='0'
+                                        disabled={isReadOnly}
+                                        className={isReadOnly ? 'bg-gray-100' : ''}
+                                    />
+                                </div>
                             </div>
                             
                             {isStockUnit && (
@@ -490,20 +504,6 @@ export function EditUnitDialog({
                                     </div>
                                 </div>
                             )}
-                            
-                            <div className='space-y-2'>
-                                <Label htmlFor='unitThreshold'>Unit Threshold</Label>
-                                <Input
-                                    id='unitThreshold'
-                                    name='unitThreshold'
-                                    type='number'
-                                    value={formData.unitThreshold}
-                                    onChange={handleInputChange}
-                                    min='0'
-                                    disabled={isReadOnly}
-                                    className={isReadOnly ? 'bg-gray-100' : ''}
-                                />
-                            </div>
                         </TabsContent>
 
                         <TabsContent value='iothub' className='space-y-4'>
@@ -583,7 +583,7 @@ export function EditUnitDialog({
                             </div>
 
                             {isStockUnit && (
-                                <div className='grid grid-cols-3 gap-4'>
+                                <div className='grid grid-cols-2 gap-4'>
                                     <div className='space-y-2'>
                                         <Label htmlFor='tankHeight'>Tank Height</Label>
                                         <Input
@@ -604,19 +604,6 @@ export function EditUnitDialog({
                                             name='sensorHeight'
                                             type='number'
                                             value={formData.sensorHeight}
-                                            onChange={handleInputChange}
-                                            min='0'
-                                            disabled={isReadOnly}
-                                            className={isReadOnly ? 'bg-gray-100' : ''}
-                                        />
-                                    </div>
-                                    <div className='space-y-2'>
-                                        <Label htmlFor='anomaly'>Anomaly</Label>
-                                        <Input
-                                            id='anomaly'
-                                            name='anomaly'
-                                            type='number'
-                                            value={formData.anomaly}
                                             onChange={handleInputChange}
                                             min='0'
                                             disabled={isReadOnly}
