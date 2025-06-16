@@ -353,6 +353,8 @@ export function EditUnitDialog({
         return `units: ${units || 'none'}, subCategories: ${subCategories || 'none'}`;
     };
 
+    const tabsList = getTabsList();
+
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent className='sm:max-w-4xl max-h-[80vh] overflow-y-auto'>
@@ -365,7 +367,7 @@ export function EditUnitDialog({
 
                 <form onSubmit={handleSubmit} className='space-y-6'>
                     <Tabs defaultValue='basic' className='w-full'>
-                        <TabsList className={`grid w-full grid-cols-${getTabsList().length}`}>
+                        <TabsList className={`grid w-full grid-cols-${tabsList.length} gap-1`}>
                             <TabsTrigger value='basic'>Basic</TabsTrigger>
                             <TabsTrigger value='iothub'>IoT Hub</TabsTrigger>
                             <TabsTrigger value='settings'>Settings</TabsTrigger>
