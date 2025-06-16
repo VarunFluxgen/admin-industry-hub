@@ -21,6 +21,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import { logApiCall } from '@/utils/apiLogger';
 import { useAuth } from '@/contexts/AuthContext';
+import { Plus, X } from 'lucide-react';
 
 interface EditUnitDialogProps {
     open: boolean;
@@ -29,6 +30,18 @@ interface EditUnitDialogProps {
     industryId: string;
     onSuccess: () => void;
 }
+
+const QUALITY_PARAMS = [
+    { key: 'pH', label: 'pH', unit: '' },
+    { key: 'TDS', label: 'TDS', unit: 'ppm' },
+    { key: 'COD', label: 'COD', unit: 'mg/L' },
+    { key: 'TSS', label: 'TSS', unit: 'mg/L' },
+    { key: 'BOD', label: 'BOD', unit: 'mg/L' },
+    { key: 'DO', label: 'DO', unit: 'ppm' },
+    { key: 'Temp', label: 'Temperature', unit: '°' },
+    { key: 'EC', label: 'EC', unit: 'μs/cm' },
+    { key: 'TBD', label: 'TBD', unit: 'NTU' },
+];
 
 export function EditUnitDialog({
     open,
@@ -47,14 +60,36 @@ export function EditUnitDialog({
         isDeployed: false,
         alertEnabled: true,
         interpoaltionDisabled: false,
+        // Stock-specific fields
+        height: 0,
+        maxCapacity: 0,
         // IoT Hub Config
         iothubdeviceId: '',
         iothubdeviceType: 'EXTERNAL',
         slaveId: 1,
         metertype: 'RS485',
         streamId: '',
+        tankHeight: 0,
+        sensorHeight: 0,
+        anomaly: 0,
+        // Virtual node meta
+        metaUnits: [] as string[],
+        metaCalculations: '',
+        metaSubCategories: [] as string[],
+        // Quality params
+        params: [] as string[],
+        siUnit: {} as Record<string, string>,
+        lowThreshold: {} as Record<string, number>,
+        highThreshold: {} as Record<string, number>,
+        min: {} as Record<string, number>,
+        max: {} as Record<string, number>,
+        alertEnabledParams: {} as Record<string, boolean>,
     });
     const { toast } = useToast();
+
+    const isStockUnit = unit?.standardCategoryId === 'STOCK_CATEGORY';
+    const isVirtualNode = unit?.standardCategoryId === 'VIRTUAL_NODE';
+    const isQualityUnit = unit?.standardCategoryId === 'QUALITY_CATEGORY';
 
     useEffect(() => {
         if (unit) {
@@ -66,12 +101,30 @@ export function EditUnitDialog({
                 isDeployed: unit.isDeployed || false,
                 alertEnabled: unit.alertEnabled !== undefined ? unit.alertEnabled : true,
                 interpoaltionDisabled: unit.interpoaltionDisabled || false,
+                // Stock-specific fields
+                height: unit.height || 0,
+                maxCapacity: unit.maxCapacity || 0,
                 // IoT Hub Config
                 iothubdeviceId: unit.iothubConfig?.iothubdeviceId || '',
                 iothubdeviceType: unit.iothubConfig?.iothubdeviceType || 'EXTERNAL',
                 slaveId: unit.iothubConfig?.slaveId || 1,
                 metertype: unit.iothubConfig?.metertype || 'RS485',
                 streamId: unit.iothubConfig?.streamId || '',
+                tankHeight: unit.iothubConfig?.tankHeight || 0,
+                sensorHeight: unit.iothubConfig?.sensorHeight || 0,
+                anomaly: unit.iothubConfig?.anomaly || 0,
+                // Virtual node meta
+                metaUnits: unit.meta?.units || [],
+                metaCalculations: unit.meta?.calculations || '',
+                metaSubCategories: unit.meta?.subCategories || [],
+                // Quality params
+                params: unit.params || [],
+                siUnit: unit.siUnit || {},
+                lowThreshold: unit.lowThreshold || {},
+                highThreshold: unit.highThreshold || {},
+                min: unit.min || {},
+                max: unit.max || {},
+                alertEnabledParams: unit.alertEnabled || {},
             });
         }
     }, [unit]);
@@ -85,12 +138,11 @@ export function EditUnitDialog({
         try {
             const apiEndpoint = 'https://admin-aquagen-api-bfckdag2aydtegc2.southindia-01.azurewebsites.net/api/admin/unit/';
             
-            const unitModel = {
+            let unitModel: any = {
                 deviceId: formData.deviceId,
                 unitId: unit.unitId,
                 unitName: formData.unitName,
                 isDeployed: formData.isDeployed,
-                flowFactor: formData.flowFactor,
                 unitThreshold: formData.unitThreshold,
                 alertEnabled: formData.alertEnabled,
                 interpoaltionDisabled: formData.interpoaltionDisabled,
@@ -105,6 +157,40 @@ export function EditUnitDialog({
                 },
             };
 
+            // Add flow factor for non-stock units
+            if (!isStockUnit) {
+                unitModel.flowFactor = formData.flowFactor;
+            }
+
+            // Add stock-specific fields
+            if (isStockUnit) {
+                unitModel.height = formData.height;
+                unitModel.maxCapacity = formData.maxCapacity;
+                unitModel.iothubConfig.tankHeight = formData.tankHeight;
+                unitModel.iothubConfig.sensorHeight = formData.sensorHeight;
+                unitModel.iothubConfig.anomaly = formData.anomaly;
+            }
+
+            // Add virtual node meta
+            if (isVirtualNode) {
+                unitModel.meta = {
+                    units: formData.metaUnits,
+                    calculations: formData.metaCalculations,
+                    subCategories: formData.metaSubCategories,
+                };
+            }
+
+            // Add quality-specific fields
+            if (isQualityUnit) {
+                unitModel.params = formData.params;
+                unitModel.siUnit = formData.siUnit;
+                unitModel.lowThreshold = formData.lowThreshold;
+                unitModel.highThreshold = formData.highThreshold;
+                unitModel.min = formData.min;
+                unitModel.max = formData.max;
+                unitModel.alertEnabled = formData.alertEnabledParams;
+            }
+
             const response = await fetch(apiEndpoint, {
                 method: 'PUT',
                 headers: {
@@ -118,7 +204,6 @@ export function EditUnitDialog({
             });
 
             if (response.ok) {
-                // Log the API call for updating unit with full unit object
                 await logApiCall(apiEndpoint, {
                     method: 'PUT',
                     targetIndustryId: industryId,
@@ -155,13 +240,116 @@ export function EditUnitDialog({
         }));
     };
 
+    const addMetaUnit = () => {
+        if (!hasFullAccess()) return;
+        setFormData(prev => ({
+            ...prev,
+            metaUnits: [...prev.metaUnits, '']
+        }));
+    };
+
+    const removeMetaUnit = (index: number) => {
+        if (!hasFullAccess()) return;
+        setFormData(prev => ({
+            ...prev,
+            metaUnits: prev.metaUnits.filter((_, i) => i !== index)
+        }));
+    };
+
+    const updateMetaUnit = (index: number, value: string) => {
+        if (!hasFullAccess()) return;
+        setFormData(prev => ({
+            ...prev,
+            metaUnits: prev.metaUnits.map((unit, i) => i === index ? value : unit)
+        }));
+    };
+
+    const addMetaSubCategory = () => {
+        if (!hasFullAccess()) return;
+        setFormData(prev => ({
+            ...prev,
+            metaSubCategories: [...prev.metaSubCategories, '']
+        }));
+    };
+
+    const removeMetaSubCategory = (index: number) => {
+        if (!hasFullAccess()) return;
+        setFormData(prev => ({
+            ...prev,
+            metaSubCategories: prev.metaSubCategories.filter((_, i) => i !== index)
+        }));
+    };
+
+    const updateMetaSubCategory = (index: number, value: string) => {
+        if (!hasFullAccess()) return;
+        setFormData(prev => ({
+            ...prev,
+            metaSubCategories: prev.metaSubCategories.map((subCat, i) => i === index ? value : subCat)
+        }));
+    };
+
+    const addQualityParam = (paramKey: string) => {
+        if (!hasFullAccess() || formData.params.includes(paramKey)) return;
+        
+        const param = QUALITY_PARAMS.find(p => p.key === paramKey);
+        if (!param) return;
+
+        setFormData(prev => ({
+            ...prev,
+            params: [...prev.params, paramKey],
+            siUnit: { ...prev.siUnit, [paramKey]: param.unit },
+            lowThreshold: { ...prev.lowThreshold, [paramKey]: 0 },
+            highThreshold: { ...prev.highThreshold, [paramKey]: 100 },
+            min: { ...prev.min, [paramKey]: 0 },
+            max: { ...prev.max, [paramKey]: 1000 },
+            alertEnabledParams: { ...prev.alertEnabledParams, [paramKey]: false },
+        }));
+    };
+
+    const removeQualityParam = (paramKey: string) => {
+        if (!hasFullAccess()) return;
+        
+        setFormData(prev => ({
+            ...prev,
+            params: prev.params.filter(p => p !== paramKey),
+            siUnit: Object.fromEntries(Object.entries(prev.siUnit).filter(([key]) => key !== paramKey)),
+            lowThreshold: Object.fromEntries(Object.entries(prev.lowThreshold).filter(([key]) => key !== paramKey)),
+            highThreshold: Object.fromEntries(Object.entries(prev.highThreshold).filter(([key]) => key !== paramKey)),
+            min: Object.fromEntries(Object.entries(prev.min).filter(([key]) => key !== paramKey)),
+            max: Object.fromEntries(Object.entries(prev.max).filter(([key]) => key !== paramKey)),
+            alertEnabledParams: Object.fromEntries(Object.entries(prev.alertEnabledParams).filter(([key]) => key !== paramKey)),
+        }));
+    };
+
+    const updateQualityParam = (paramKey: string, field: string, value: any) => {
+        if (!hasFullAccess()) return;
+        
+        setFormData(prev => ({
+            ...prev,
+            [field]: { ...prev[field as keyof typeof prev], [paramKey]: value }
+        }));
+    };
+
     if (!unit) return null;
 
     const isReadOnly = !hasFullAccess();
 
+    const getTabsList = () => {
+        const tabs = ['basic', 'iothub', 'settings'];
+        if (isVirtualNode) tabs.push('meta');
+        if (isQualityUnit) tabs.push('params');
+        return tabs;
+    };
+
+    const getMetaDescription = () => {
+        const units = formData.metaUnits.filter(u => u.trim()).join(' + ');
+        const subCategories = formData.metaSubCategories.filter(sc => sc.trim()).join(' + ');
+        return `units: ${units || 'none'}, subCategories: ${subCategories || 'none'}`;
+    };
+
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className='sm:max-w-2xl max-h-[80vh] overflow-y-auto'>
+            <DialogContent className='sm:max-w-4xl max-h-[80vh] overflow-y-auto'>
                 <DialogHeader>
                     <DialogTitle>{isReadOnly ? 'View Unit Details' : 'Edit Unit'}</DialogTitle>
                     <DialogDescription>
@@ -171,10 +359,12 @@ export function EditUnitDialog({
 
                 <form onSubmit={handleSubmit} className='space-y-6'>
                     <Tabs defaultValue='basic' className='w-full'>
-                        <TabsList className='grid w-full grid-cols-3'>
+                        <TabsList className={`grid w-full grid-cols-${getTabsList().length}`}>
                             <TabsTrigger value='basic'>Basic</TabsTrigger>
                             <TabsTrigger value='iothub'>IoT Hub</TabsTrigger>
                             <TabsTrigger value='settings'>Settings</TabsTrigger>
+                            {isVirtualNode && <TabsTrigger value='meta'>Meta</TabsTrigger>}
+                            {isQualityUnit && <TabsTrigger value='params'>Parameters</TabsTrigger>}
                         </TabsList>
 
                         <TabsContent value='basic' className='space-y-4'>
@@ -215,20 +405,54 @@ export function EditUnitDialog({
                                         className={isReadOnly ? 'bg-gray-100' : ''}
                                     />
                                 </div>
-                                <div className='space-y-2'>
-                                    <Label htmlFor='flowFactor'>Flow Factor</Label>
-                                    <Input
-                                        id='flowFactor'
-                                        name='flowFactor'
-                                        type='number'
-                                        value={formData.flowFactor}
-                                        onChange={handleInputChange}
-                                        min='0'
-                                        disabled={isReadOnly}
-                                        className={isReadOnly ? 'bg-gray-100' : ''}
-                                    />
-                                </div>
+                                {!isStockUnit && (
+                                    <div className='space-y-2'>
+                                        <Label htmlFor='flowFactor'>Flow Factor</Label>
+                                        <Input
+                                            id='flowFactor'
+                                            name='flowFactor'
+                                            type='number'
+                                            value={formData.flowFactor}
+                                            onChange={handleInputChange}
+                                            min='0'
+                                            disabled={isReadOnly}
+                                            className={isReadOnly ? 'bg-gray-100' : ''}
+                                        />
+                                    </div>
+                                )}
                             </div>
+                            
+                            {isStockUnit && (
+                                <div className='grid grid-cols-2 gap-4'>
+                                    <div className='space-y-2'>
+                                        <Label htmlFor='height'>Height</Label>
+                                        <Input
+                                            id='height'
+                                            name='height'
+                                            type='number'
+                                            value={formData.height}
+                                            onChange={handleInputChange}
+                                            min='0'
+                                            disabled={isReadOnly}
+                                            className={isReadOnly ? 'bg-gray-100' : ''}
+                                        />
+                                    </div>
+                                    <div className='space-y-2'>
+                                        <Label htmlFor='maxCapacity'>Max Capacity</Label>
+                                        <Input
+                                            id='maxCapacity'
+                                            name='maxCapacity'
+                                            type='number'
+                                            value={formData.maxCapacity}
+                                            onChange={handleInputChange}
+                                            min='0'
+                                            disabled={isReadOnly}
+                                            className={isReadOnly ? 'bg-gray-100' : ''}
+                                        />
+                                    </div>
+                                </div>
+                            )}
+                            
                             <div className='space-y-2'>
                                 <Label htmlFor='unitThreshold'>Unit Threshold</Label>
                                 <Input
@@ -320,6 +544,50 @@ export function EditUnitDialog({
                                 </div>
                             </div>
 
+                            {isStockUnit && (
+                                <div className='grid grid-cols-3 gap-4'>
+                                    <div className='space-y-2'>
+                                        <Label htmlFor='tankHeight'>Tank Height</Label>
+                                        <Input
+                                            id='tankHeight'
+                                            name='tankHeight'
+                                            type='number'
+                                            value={formData.tankHeight}
+                                            onChange={handleInputChange}
+                                            min='0'
+                                            disabled={isReadOnly}
+                                            className={isReadOnly ? 'bg-gray-100' : ''}
+                                        />
+                                    </div>
+                                    <div className='space-y-2'>
+                                        <Label htmlFor='sensorHeight'>Sensor Height</Label>
+                                        <Input
+                                            id='sensorHeight'
+                                            name='sensorHeight'
+                                            type='number'
+                                            value={formData.sensorHeight}
+                                            onChange={handleInputChange}
+                                            min='0'
+                                            disabled={isReadOnly}
+                                            className={isReadOnly ? 'bg-gray-100' : ''}
+                                        />
+                                    </div>
+                                    <div className='space-y-2'>
+                                        <Label htmlFor='anomaly'>Anomaly</Label>
+                                        <Input
+                                            id='anomaly'
+                                            name='anomaly'
+                                            type='number'
+                                            value={formData.anomaly}
+                                            onChange={handleInputChange}
+                                            min='0'
+                                            disabled={isReadOnly}
+                                            className={isReadOnly ? 'bg-gray-100' : ''}
+                                        />
+                                    </div>
+                                </div>
+                            )}
+
                             <div className='space-y-2'>
                                 <Label htmlFor='streamId'>Stream ID</Label>
                                 <Input
@@ -350,20 +618,22 @@ export function EditUnitDialog({
                                     />
                                     <Label htmlFor='isDeployed'>Is Deployed</Label>
                                 </div>
-                                <div className='flex items-center space-x-2'>
-                                    <Checkbox
-                                        id='alertEnabled'
-                                        checked={formData.alertEnabled}
-                                        onCheckedChange={(checked) =>
-                                            !isReadOnly && setFormData((prev) => ({
-                                                ...prev,
-                                                alertEnabled: checked as boolean,
-                                            }))
-                                        }
-                                        disabled={isReadOnly}
-                                    />
-                                    <Label htmlFor='alertEnabled'>Alert Enabled</Label>
-                                </div>
+                                {!isQualityUnit && (
+                                    <div className='flex items-center space-x-2'>
+                                        <Checkbox
+                                            id='alertEnabled'
+                                            checked={formData.alertEnabled}
+                                            onCheckedChange={(checked) =>
+                                                !isReadOnly && setFormData((prev) => ({
+                                                    ...prev,
+                                                    alertEnabled: checked as boolean,
+                                                }))
+                                            }
+                                            disabled={isReadOnly}
+                                        />
+                                        <Label htmlFor='alertEnabled'>Alert Enabled</Label>
+                                    </div>
+                                )}
                                 <div className='flex items-center space-x-2'>
                                     <Checkbox
                                         id='interpoaltionDisabled'
@@ -382,6 +652,198 @@ export function EditUnitDialog({
                                 </div>
                             </div>
                         </TabsContent>
+
+                        {isVirtualNode && (
+                            <TabsContent value='meta' className='space-y-4'>
+                                <div className='space-y-4'>
+                                    <div className='p-4 bg-gray-50 rounded-lg'>
+                                        <p className='text-sm text-gray-600 mb-2'>Description:</p>
+                                        <p className='font-mono text-sm'>{getMetaDescription()}</p>
+                                    </div>
+                                    
+                                    <div className='space-y-3'>
+                                        <div className='flex items-center justify-between'>
+                                            <Label>Units</Label>
+                                            {!isReadOnly && (
+                                                <Button type="button" size="sm" onClick={addMetaUnit}>
+                                                    <Plus className="h-4 w-4 mr-1" />
+                                                    Add Unit
+                                                </Button>
+                                            )}
+                                        </div>
+                                        {formData.metaUnits.map((unitItem, index) => (
+                                            <div key={index} className='flex gap-2'>
+                                                <Input
+                                                    value={unitItem}
+                                                    onChange={(e) => updateMetaUnit(index, e.target.value)}
+                                                    placeholder='Enter unit ID'
+                                                    disabled={isReadOnly}
+                                                    className={isReadOnly ? 'bg-gray-100' : ''}
+                                                />
+                                                {!isReadOnly && (
+                                                    <Button
+                                                        type="button"
+                                                        size="sm"
+                                                        variant="outline"
+                                                        onClick={() => removeMetaUnit(index)}
+                                                    >
+                                                        <X className="h-4 w-4" />
+                                                    </Button>
+                                                )}
+                                            </div>
+                                        ))}
+                                    </div>
+
+                                    <div className='space-y-2'>
+                                        <Label htmlFor='metaCalculations'>Calculations</Label>
+                                        <Input
+                                            id='metaCalculations'
+                                            name='metaCalculations'
+                                            value={formData.metaCalculations}
+                                            onChange={handleInputChange}
+                                            placeholder='Enter calculation formula'
+                                            disabled={isReadOnly}
+                                            className={isReadOnly ? 'bg-gray-100' : ''}
+                                        />
+                                    </div>
+
+                                    <div className='space-y-3'>
+                                        <div className='flex items-center justify-between'>
+                                            <Label>Sub Categories</Label>
+                                            {!isReadOnly && (
+                                                <Button type="button" size="sm" onClick={addMetaSubCategory}>
+                                                    <Plus className="h-4 w-4 mr-1" />
+                                                    Add Sub Category
+                                                </Button>
+                                            )}
+                                        </div>
+                                        {formData.metaSubCategories.map((subCat, index) => (
+                                            <div key={index} className='flex gap-2'>
+                                                <Input
+                                                    value={subCat}
+                                                    onChange={(e) => updateMetaSubCategory(index, e.target.value)}
+                                                    placeholder='Enter sub category'
+                                                    disabled={isReadOnly}
+                                                    className={isReadOnly ? 'bg-gray-100' : ''}
+                                                />
+                                                {!isReadOnly && (
+                                                    <Button
+                                                        type="button"
+                                                        size="sm"
+                                                        variant="outline"
+                                                        onClick={() => removeMetaSubCategory(index)}
+                                                    >
+                                                        <X className="h-4 w-4" />
+                                                    </Button>
+                                                )}
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            </TabsContent>
+                        )}
+
+                        {isQualityUnit && (
+                            <TabsContent value='params' className='space-y-4'>
+                                <div className='space-y-4'>
+                                    <div className='flex items-center justify-between'>
+                                        <Label>Parameters</Label>
+                                        {!isReadOnly && (
+                                            <Select onValueChange={addQualityParam}>
+                                                <SelectTrigger className="w-48">
+                                                    <SelectValue placeholder="Add parameter..." />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    {QUALITY_PARAMS.filter(p => !formData.params.includes(p.key)).map(param => (
+                                                        <SelectItem key={param.key} value={param.key}>
+                                                            {param.label} ({param.unit})
+                                                        </SelectItem>
+                                                    ))}
+                                                </SelectContent>
+                                            </Select>
+                                        )}
+                                    </div>
+
+                                    {formData.params.map(paramKey => {
+                                        const param = QUALITY_PARAMS.find(p => p.key === paramKey);
+                                        if (!param) return null;
+
+                                        return (
+                                            <div key={paramKey} className='border rounded-lg p-4 space-y-3'>
+                                                <div className='flex items-center justify-between'>
+                                                    <h4 className='font-medium'>{param.label}</h4>
+                                                    {!isReadOnly && (
+                                                        <Button
+                                                            type="button"
+                                                            size="sm"
+                                                            variant="outline"
+                                                            onClick={() => removeQualityParam(paramKey)}
+                                                        >
+                                                            <X className="h-4 w-4" />
+                                                        </Button>
+                                                    )}
+                                                </div>
+                                                
+                                                <div className='grid grid-cols-2 gap-3'>
+                                                    <div className='space-y-2'>
+                                                        <Label>Low Threshold</Label>
+                                                        <Input
+                                                            type="number"
+                                                            value={formData.lowThreshold[paramKey] || 0}
+                                                            onChange={(e) => updateQualityParam(paramKey, 'lowThreshold', Number(e.target.value))}
+                                                            disabled={isReadOnly}
+                                                            className={isReadOnly ? 'bg-gray-100' : ''}
+                                                        />
+                                                    </div>
+                                                    <div className='space-y-2'>
+                                                        <Label>High Threshold</Label>
+                                                        <Input
+                                                            type="number"
+                                                            value={formData.highThreshold[paramKey] || 0}
+                                                            onChange={(e) => updateQualityParam(paramKey, 'highThreshold', Number(e.target.value))}
+                                                            disabled={isReadOnly}
+                                                            className={isReadOnly ? 'bg-gray-100' : ''}
+                                                        />
+                                                    </div>
+                                                </div>
+                                                
+                                                <div className='grid grid-cols-2 gap-3'>
+                                                    <div className='space-y-2'>
+                                                        <Label>Min Value</Label>
+                                                        <Input
+                                                            type="number"
+                                                            value={formData.min[paramKey] || 0}
+                                                            onChange={(e) => updateQualityParam(paramKey, 'min', Number(e.target.value))}
+                                                            disabled={isReadOnly}
+                                                            className={isReadOnly ? 'bg-gray-100' : ''}
+                                                        />
+                                                    </div>
+                                                    <div className='space-y-2'>
+                                                        <Label>Max Value</Label>
+                                                        <Input
+                                                            type="number"
+                                                            value={formData.max[paramKey] || 0}
+                                                            onChange={(e) => updateQualityParam(paramKey, 'max', Number(e.target.value))}
+                                                            disabled={isReadOnly}
+                                                            className={isReadOnly ? 'bg-gray-100' : ''}
+                                                        />
+                                                    </div>
+                                                </div>
+
+                                                <div className='flex items-center space-x-2'>
+                                                    <Checkbox
+                                                        checked={formData.alertEnabledParams[paramKey] || false}
+                                                        onCheckedChange={(checked) => updateQualityParam(paramKey, 'alertEnabledParams', checked)}
+                                                        disabled={isReadOnly}
+                                                    />
+                                                    <Label>Alert Enabled</Label>
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </TabsContent>
+                        )}
                     </Tabs>
 
                     <div className='flex justify-end gap-3 pt-4'>
