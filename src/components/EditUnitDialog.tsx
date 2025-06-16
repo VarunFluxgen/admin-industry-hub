@@ -678,8 +678,7 @@ export function EditUnitDialog({
                             <TabsContent value='meta' className='space-y-4'>
                                 <div className='space-y-6'>
                                     <div className='space-y-3'>
-                                        <Label className='text-base font-medium'>Units from Current Industry</Label>
-                                        <p className='text-sm text-gray-600'>Select units to include in calculations:</p>
+                                        <Label className='text-base font-medium'>Units</Label>
                                         
                                         <div className='max-h-40 overflow-y-auto border rounded-lg p-3 space-y-2'>
                                             {availableUnits.length > 0 ? (
@@ -717,15 +716,14 @@ export function EditUnitDialog({
                                             name='metaCalculations'
                                             value={formData.metaCalculations}
                                             onChange={handleInputChange}
-                                            placeholder='Enter calculation formula (e.g., {unit1} + {unit2} - {subCategory1})'
+                                            placeholder='Enter calculation formula'
                                             disabled={isReadOnly}
                                             className={isReadOnly ? 'bg-gray-100' : ''}
                                         />
                                     </div>
 
                                     <div className='space-y-3'>
-                                        <Label className='text-base font-medium'>Sub Categories from Current Industry</Label>
-                                        <p className='text-sm text-gray-600'>Select subcategories to include in calculations:</p>
+                                        <Label className='text-base font-medium'>Sub Categories</Label>
                                         
                                         <div className='max-h-40 overflow-y-auto border rounded-lg p-3 space-y-2'>
                                             {availableSubCategories.length > 0 ? (
