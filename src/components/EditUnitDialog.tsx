@@ -371,23 +371,26 @@ export function EditUnitDialog({
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className='sm:max-w-4xl max-h-[80vh] overflow-y-auto'>
-                <DialogHeader>
-                    <DialogTitle>{isReadOnly ? 'View Unit Details' : 'Edit Unit'}</DialogTitle>
-                    <DialogDescription>
+                  <DialogContent className="sm:max-w-4xl max-h-[80vh] overflow-y-auto">
+                    <div className="flex items-center justify-between mb-4">
+                      <h2 className="text-lg font-semibold">
+                        {isReadOnly ? 'View Unit Details' : 'Edit Unit'}
+                      </h2>
+                      <p className="text-sm text-muted-foreground">
                         {isReadOnly ? 'View the unit details below.' : 'Update the unit details below.'}
-                    </DialogDescription>
-                </DialogHeader>
-
-                <form onSubmit={handleSubmit} className='space-y-6'>
-                    <Tabs defaultValue='basic' className='w-full'>
+                      </p>
+                    </div>
+                
+                    <form onSubmit={handleSubmit} className="space-y-6">
+                      <Tabs defaultValue="basic" className="w-full">
                         <TabsList className={`grid w-full grid-cols-${tabsList.length} gap-1`}>
-                            <TabsTrigger value='basic'>Basic</TabsTrigger>
-                            <TabsTrigger value='iothub'>IoT Hub</TabsTrigger>
-                            <TabsTrigger value='settings'>Settings</TabsTrigger>
-                            {isVirtualNode && <TabsTrigger value='meta'>Meta</TabsTrigger>}
-                            {isQualityUnit && <TabsTrigger value='params'>Parameters</TabsTrigger>}
+                          <TabsTrigger value="basic">Basic</TabsTrigger>
+                          <TabsTrigger value="iothub">IoT Hub</TabsTrigger>
+                          <TabsTrigger value="settings">Settings</TabsTrigger>
+                          {isVirtualNode && <TabsTrigger value="meta">Meta</TabsTrigger>}
+                          {isQualityUnit && <TabsTrigger value="params">Parameters</TabsTrigger>}
                         </TabsList>
+
 
                         <TabsContent value='basic' className='space-y-4'>
                             <div className='grid grid-cols-2 gap-4'>
