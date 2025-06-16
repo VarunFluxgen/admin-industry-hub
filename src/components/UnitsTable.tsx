@@ -1,12 +1,12 @@
-
 import { useState, useMemo } from 'react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Edit, Search, ArrowUpDown } from "lucide-react";
+import { Edit, Search, ArrowUpDown, Download } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import * as XLSX from 'xlsx';
 
 interface Unit {
   unitId: string;
@@ -78,6 +78,43 @@ export function UnitsTable({ units, onEditUnit }: UnitsTableProps) {
     }
   };
 
+  const handleDownloadExcel = () => {
+    if (!units || units.length === 0) {
+      return;
+    }
+
+    // Prepare data for Excel export
+    const excelData = units.map(unit => ({
+      'Unit ID': unit.unitId,
+      'Unit Name': unit.unitName,
+      'Unit Type': unit.unitType,
+      'Category': unit.standardCategoryId,
+      'Status': unit.isDeployed ? 'Deployed' : 'Not Deployed',
+      'Flow Factor': unit.flowFactor,
+      'Device ID': unit.deviceId
+    }));
+
+    // Create workbook and worksheet
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.json_to_sheet(excelData);
+
+    // Auto-size columns
+    const colWidths = Object.keys(excelData[0] || {}).map(key => ({
+      wch: Math.max(key.length, 15)
+    }));
+    ws['!cols'] = colWidths;
+
+    // Add worksheet to workbook
+    XLSX.utils.book_append_sheet(wb, ws, 'Units Data');
+
+    // Generate filename with current timestamp
+    const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
+    const filename = `units_data_${timestamp}.xlsx`;
+
+    // Download the file
+    XLSX.writeFile(wb, filename);
+  };
+
   const SortableHeader = ({ field, children }: { field: keyof Unit; children: React.ReactNode }) => (
     <TableHead>
       <Button
@@ -93,7 +130,7 @@ export function UnitsTable({ units, onEditUnit }: UnitsTableProps) {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-4 flex-wrap">
         <div className="relative flex-1 max-w-sm">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
@@ -122,6 +159,16 @@ export function UnitsTable({ units, onEditUnit }: UnitsTableProps) {
           onClick={() => setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc')}
         >
           {sortDirection === 'asc' ? '↑' : '↓'}
+        </Button>
+        <Button
+          onClick={handleDownloadExcel}
+          variant="outline"
+          size="sm"
+          disabled={!units || units.length === 0}
+          className="shrink-0"
+        >
+          <Download className="h-4 w-4 mr-2" />
+          Download Excel
         </Button>
       </div>
 
