@@ -126,7 +126,7 @@ export function EditUnitDialog({
             setFormData({
                 unitName: unit.unitName || '',
                 deviceId: unit.deviceId || '',
-                unitType: unit.unitType || '',
+                unitType: unit.unitType || 'ENERGY',
                 flowFactor: unit.flowFactor || 1,
                 unitThreshold: unit.unitThreshold || 0,
                 isDeployed: unit.isDeployed || false,
@@ -438,7 +438,7 @@ export function EditUnitDialog({
                                             value={formData.unitType}
                                             onChange={handleInputChange}
                                             placeholder='Enter unit type (e.g., ENERGY)'
-                                            disabled={isReadOnly}
+                                            disabled
                                             className={isReadOnly ? 'bg-gray-100' : ''}
                                         />
                                     </div>
