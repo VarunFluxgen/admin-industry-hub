@@ -1,3 +1,4 @@
+
 import { useState, useMemo } from 'react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
@@ -25,6 +26,22 @@ interface Unit {
   standardCategoryId: string;
   flowFactor: number;
   deviceId: string;
+  // Add all the detailed properties that come from industry data
+  unitThreshold?: number;
+  alertEnabled?: any;
+  interpoaltionDisabled?: boolean;
+  height?: number;
+  maxCapacity?: number;
+  createdTime?: string;
+  iothubConfig?: any;
+  params?: string[];
+  siUnit?: any;
+  lowThreshold?: any;
+  highThreshold?: any;
+  min?: any;
+  max?: any;
+  meta?: any;
+  manualMeterType?: string;
 }
 
 interface UnitsTableProps {
@@ -132,108 +149,100 @@ export function UnitsTable({ units, onEditUnit }: UnitsTableProps) {
     try {
       toast({
         title: 'Preparing Download',
-        description: 'Fetching detailed unit data...',
+        description: 'Preparing complete unit data for export...',
       });
 
-      // Fetch detailed data for all units
-      const detailedUnitsData = await Promise.all(
-        units.map(async (unit) => {
-          const detailedData = await fetchDetailedUnitData(unit.unitId);
-          return {
-            basicData: unit,
-            detailedData: detailedData
-          };
-        })
-      );
-
-      // Prepare Excel data with all available information
-      const excelData = detailedUnitsData.map(({ basicData, detailedData }) => {
+      // Use the complete unit data that's already available from industry details
+      const excelData = units.map((unit) => {
         const baseData = {
-          'Unit ID': basicData.unitId,
-          'Unit Name': basicData.unitName,
-          'Unit Type': basicData.unitType,
-          'Category': basicData.standardCategoryId,
-          'Status': basicData.isDeployed ? 'Deployed' : 'Not Deployed',
-          'Flow Factor': basicData.flowFactor,
-          'Device ID': basicData.deviceId
+          'Unit ID': unit.unitId,
+          'Unit Name': unit.unitName,
+          'Unit Type': unit.unitType || 'N/A',
+          'Category': unit.standardCategoryId,
+          'Status': unit.isDeployed ? 'Deployed' : 'Not Deployed',
+          'Flow Factor': unit.flowFactor,
+          'Device ID': unit.deviceId || 'N/A'
         };
 
-        // Add detailed data if available
-        if (detailedData) {
-          // Add IoT Hub configuration data
-          if (detailedData.iothubConfig) {
-            baseData['IoT Hub Device ID'] = detailedData.iothubConfig.iothubdeviceId || 'N/A';
-            baseData['IoT Hub Device Type'] = detailedData.iothubConfig.iothubdeviceType || 'N/A';
-            baseData['Slave ID'] = detailedData.iothubConfig.slaveId || 'N/A';
-            baseData['Meter Type'] = detailedData.iothubConfig.metertype || 'N/A';
-            baseData['Stream ID'] = detailedData.iothubConfig.streamId || 'N/A';
-            
-            // Add tank-specific settings
-            if (detailedData.iothubConfig.tankHeight !== undefined) {
-              baseData['Tank Height'] = detailedData.iothubConfig.tankHeight;
-            }
-            if (detailedData.iothubConfig.sensorHeight !== undefined) {
-              baseData['Sensor Height'] = detailedData.iothubConfig.sensorHeight;
-            }
+        // Add IoT Hub configuration data
+        if (unit.iothubConfig) {
+          baseData['IoT Hub Device ID'] = unit.iothubConfig.iothubdeviceId || 'N/A';
+          baseData['IoT Hub Device Type'] = unit.iothubConfig.iothubdeviceType || 'N/A';
+          baseData['Slave ID'] = unit.iothubConfig.slaveId || 'N/A';
+          baseData['Meter Type'] = unit.iothubConfig.metertype || 'N/A';
+          baseData['Stream ID'] = unit.iothubConfig.streamId || 'N/A';
+          
+          // Add tank-specific settings
+          if (unit.iothubConfig.tankHeight !== undefined) {
+            baseData['Tank Height'] = unit.iothubConfig.tankHeight;
           }
+          if (unit.iothubConfig.sensorHeight !== undefined) {
+            baseData['Sensor Height'] = unit.iothubConfig.sensorHeight;
+          }
+        }
 
-          // Add unit-specific settings
-          if (detailedData.unitThreshold !== undefined) {
-            baseData['Unit Threshold'] = detailedData.unitThreshold;
-          }
-          if (detailedData.alertEnabled !== undefined) {
-            baseData['Alert Enabled'] = typeof detailedData.alertEnabled === 'object' 
-              ? JSON.stringify(detailedData.alertEnabled)
-              : detailedData.alertEnabled;
-          }
-          if (detailedData.interpoaltionDisabled !== undefined) {
-            baseData['Interpolation Disabled'] = detailedData.interpoaltionDisabled;
-          }
-          if (detailedData.height !== undefined) {
-            baseData['Height'] = detailedData.height;
-          }
-          if (detailedData.maxCapacity !== undefined) {
-            baseData['Max Capacity'] = detailedData.maxCapacity;
-          }
-          if (detailedData.createdTime) {
-            baseData['Created Time'] = detailedData.createdTime;
-          }
+        // Add unit-specific settings
+        if (unit.unitThreshold !== undefined) {
+          baseData['Unit Threshold'] = unit.unitThreshold;
+        }
+        if (unit.alertEnabled !== undefined) {
+          baseData['Alert Enabled'] = typeof unit.alertEnabled === 'object' 
+            ? JSON.stringify(unit.alertEnabled)
+            : unit.alertEnabled;
+        }
+        if (unit.interpoaltionDisabled !== undefined) {
+          baseData['Interpolation Disabled'] = unit.interpoaltionDisabled;
+        }
+        if (unit.height !== undefined) {
+          baseData['Height'] = unit.height;
+        }
+        if (unit.maxCapacity !== undefined) {
+          baseData['Max Capacity'] = unit.maxCapacity;
+        }
+        if (unit.createdTime) {
+          baseData['Created Time'] = unit.createdTime;
+        }
 
-          // Add quality parameters for quality units
-          if (detailedData.params && Array.isArray(detailedData.params)) {
-            baseData['Quality Parameters'] = detailedData.params.join(', ');
-          }
-          if (detailedData.siUnit && typeof detailedData.siUnit === 'object') {
-            baseData['SI Units'] = JSON.stringify(detailedData.siUnit);
-          }
-          if (detailedData.lowThreshold && typeof detailedData.lowThreshold === 'object') {
-            baseData['Low Thresholds'] = JSON.stringify(detailedData.lowThreshold);
-          }
-          if (detailedData.highThreshold && typeof detailedData.highThreshold === 'object') {
-            baseData['High Thresholds'] = JSON.stringify(detailedData.highThreshold);
-          }
+        // Add quality parameters for quality units
+        if (unit.params && Array.isArray(unit.params)) {
+          baseData['Quality Parameters'] = unit.params.join(', ');
+        }
+        if (unit.siUnit && typeof unit.siUnit === 'object') {
+          baseData['SI Units'] = JSON.stringify(unit.siUnit);
+        }
+        if (unit.lowThreshold && typeof unit.lowThreshold === 'object') {
+          baseData['Low Thresholds'] = JSON.stringify(unit.lowThreshold);
+        }
+        if (unit.highThreshold && typeof unit.highThreshold === 'object') {
+          baseData['High Thresholds'] = JSON.stringify(unit.highThreshold);
+        }
+        if (unit.min && typeof unit.min === 'object') {
+          baseData['Min Values'] = JSON.stringify(unit.min);
+        }
+        if (unit.max && typeof unit.max === 'object') {
+          baseData['Max Values'] = JSON.stringify(unit.max);
+        }
 
-          // Add virtual unit metadata
-          if (detailedData.meta && typeof detailedData.meta === 'object') {
-            if (detailedData.meta.units) {
-              baseData['Virtual Units'] = Array.isArray(detailedData.meta.units) 
-                ? detailedData.meta.units.join(', ')
-                : detailedData.meta.units;
-            }
-            if (detailedData.meta.calculations) {
-              baseData['Calculations'] = detailedData.meta.calculations;
-            }
-            if (detailedData.meta.subCategories) {
-              baseData['Sub Categories'] = Array.isArray(detailedData.meta.subCategories)
-                ? detailedData.meta.subCategories.join(', ')
-                : detailedData.meta.subCategories;
-            }
+        // Add virtual unit metadata
+        if (unit.meta && typeof unit.meta === 'object') {
+          if (unit.meta.units) {
+            baseData['Virtual Units'] = Array.isArray(unit.meta.units) 
+              ? unit.meta.units.join(', ')
+              : unit.meta.units;
           }
+          if (unit.meta.calculations) {
+            baseData['Calculations'] = unit.meta.calculations;
+          }
+          if (unit.meta.subCategories) {
+            baseData['Sub Categories'] = Array.isArray(unit.meta.subCategories)
+              ? unit.meta.subCategories.join(', ')
+              : unit.meta.subCategories;
+          }
+        }
 
-          // Add manual meter type for manual units
-          if (detailedData.manualMeterType) {
-            baseData['Manual Meter Type'] = detailedData.manualMeterType;
-          }
+        // Add manual meter type for manual units
+        if (unit.manualMeterType) {
+          baseData['Manual Meter Type'] = unit.manualMeterType;
         }
 
         return baseData;
@@ -261,7 +270,7 @@ export function UnitsTable({ units, onEditUnit }: UnitsTableProps) {
 
       toast({
         title: 'Download Complete',
-        description: `Downloaded complete data for ${units.length} units`,
+        description: `Downloaded complete data for ${units.length} units with IoT hub and settings`,
       });
 
     } catch (error) {
