@@ -88,7 +88,7 @@ export function EditUnitDialog({
     const { toast } = useToast();
 
     const isStockUnit = unit?.standardCategoryId === 'STOCK_CATEGORY';
-    const isVirtualNode = unit?.standardCategoryId === 'VIRTUAL_NODE';
+    const isVirtualNode = unit?.standardCategoryId === 'VIRTUAL_CATEGORY' || unit?.standardCategoryId === 'VIRTUAL_NODE';
     const isQualityUnit = unit?.standardCategoryId === 'QUALITY_CATEGORY';
 
     useEffect(() => {
