@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { SidebarTrigger } from '@/components/ui/sidebar';
 import {
@@ -98,12 +97,62 @@ const CreateIndustry = () => {
                     password: '',
                 });
             } else {
-                throw new Error('Failed to create industry');
+                // Extract actual error details from API response
+                let errorMessage = 'Failed to create industry. Please try again.';
+                let errorDetails = '';
+
+                try {
+                    const errorData = await response.json();
+                    console.log('API Error Response:', errorData);
+                    
+                    // Extract error message from various possible response formats
+                    if (errorData.message) {
+                        errorMessage = errorData.message;
+                    } else if (errorData.error) {
+                        errorMessage = errorData.error;
+                    } else if (errorData.detail) {
+                        errorMessage = errorData.detail;
+                    } else if (errorData.msg) {
+                        errorMessage = errorData.msg;
+                    }
+
+                    // Add additional error details if available
+                    if (errorData.errors && Array.isArray(errorData.errors)) {
+                        errorDetails = errorData.errors.join(', ');
+                    } else if (errorData.validation_errors) {
+                        errorDetails = JSON.stringify(errorData.validation_errors);
+                    }
+
+                    // Include status code and status text
+                    errorDetails += ` (Status: ${response.status} ${response.statusText})`;
+                } catch (parseError) {
+                    console.error('Error parsing API response:', parseError);
+                    errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+                    errorDetails = 'Unable to parse error response from server';
+                }
+
+                toast({
+                    title: 'Error Creating Industry',
+                    description: `${errorMessage}${errorDetails ? ` - ${errorDetails}` : ''}`,
+                    variant: 'destructive',
+                });
             }
         } catch (error) {
+            console.error('Network/Request Error:', error);
+            
+            let errorMessage = 'Network error occurred. Please check your connection and try again.';
+            let errorDetails = '';
+
+            if (error instanceof Error) {
+                errorMessage = error.message;
+                errorDetails = error.name;
+            } else if (typeof error === 'string') {
+                errorMessage = error;
+            }
+
             toast({
-                title: 'Error',
-                description: 'Failed to create industry. Please try again.',
+                title: 'Connection Error',
+                description: `${errorMessage}${errorDetails ? ` (${errorDetails})` : ''}`,
                 variant: 'destructive',
             });
         } finally {
