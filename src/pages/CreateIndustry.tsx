@@ -17,6 +17,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { CheckCircle, Copy } from 'lucide-react';
 
 interface CreatedIndustryData {
+    industryId: string;
     industryName: string;
     userName: string;
     password: string;
@@ -71,6 +72,9 @@ const CreateIndustry = () => {
             });
 
             if (response.ok) {
+                const responseData = await response.json();
+                console.log('API Success Response:', responseData);
+
                 // Log the API call for creating industry
                 await logApiCall(apiEndpoint, {
                     method: 'POST',
@@ -78,11 +82,12 @@ const CreateIndustry = () => {
                     userName: formData.userName,
                 });
 
-                // Set the created industry data to display
+                // Set the created industry data to display with industryId from API response
                 setCreatedIndustry({
-                    industryName: formData.industryName,
-                    userName: formData.userName,
-                    password: formData.password,
+                    industryId: responseData.data?.industryId || 'N/A',
+                    industryName: responseData.data?.industryName || formData.industryName,
+                    userName: responseData.data?.userName || formData.userName,
+                    password: responseData.data?.password || formData.password,
                 });
 
                 toast({
@@ -218,6 +223,20 @@ const CreateIndustry = () => {
                         </CardHeader>
                         <CardContent className='space-y-4'>
                             <div className='grid grid-cols-1 gap-4'>
+                                <div className='flex items-center justify-between p-3 bg-gray-50 rounded-lg'>
+                                    <div>
+                                        <Label className='text-sm font-medium text-gray-600'>Industry ID</Label>
+                                        <p className='text-lg font-semibold'>{createdIndustry.industryId}</p>
+                                    </div>
+                                    <Button
+                                        variant='outline'
+                                        size='sm'
+                                        onClick={() => copyToClipboard(createdIndustry.industryId, 'Industry ID')}
+                                    >
+                                        <Copy className='h-4 w-4' />
+                                    </Button>
+                                </div>
+
                                 <div className='flex items-center justify-between p-3 bg-gray-50 rounded-lg'>
                                     <div>
                                         <Label className='text-sm font-medium text-gray-600'>Industry Name</Label>
