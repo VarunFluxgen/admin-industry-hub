@@ -491,7 +491,7 @@ export function EditUnitDialog({
                             </div>
                             <div className='grid grid-cols-2 gap-4'>
                                 <div className='space-y-2'>
-                                    <Label htmlFor='deviceId'>Device ID</Label>
+                                    <Label htmlFor='deviceId'>Device ID </Label>
                                     <Input
                                         id='deviceId'
                                         name='deviceId'
@@ -504,24 +504,23 @@ export function EditUnitDialog({
                                         }
                                     />
                                 </div>
-                                {isEnergyUnit && (
-                                    <div className='space-y-2'>
-                                        <Label htmlFor='unitType'>
-                                            Unit Type
-                                        </Label>
-                                        <Input
-                                            id='unitType'
-                                            name='unitType'
-                                            value={formData.unitType}
-                                            onChange={handleInputChange}
-                                            placeholder='Enter unit type (e.g., ENERGY)'
-                                            disabled
-                                            className={
-                                                isReadOnly ? 'bg-gray-100' : ''
-                                            }
-                                        />
-                                    </div>
-                                )}
+                                <div className='space-y-2'>
+                                    <Label htmlFor='unitThreshold'>
+                                        Unit Threshold
+                                    </Label>
+                                    <Input
+                                        id='unitThreshold'
+                                        name='unitThreshold'
+                                        type='number'
+                                        value={formData.unitThreshold}
+                                        onChange={handleInputChange}
+                                        min='0'
+                                        disabled={isReadOnly}
+                                        className={
+                                            isReadOnly ? 'bg-gray-100' : ''
+                                        }
+                                    />
+                                </div>
                             </div>
 
                             <div className='grid grid-cols-2 gap-4'>
@@ -545,23 +544,24 @@ export function EditUnitDialog({
                                         />
                                     </div>
                                 )}
-                                <div className='space-y-2'>
-                                    <Label htmlFor='unitThreshold'>
-                                        Unit Threshold
-                                    </Label>
-                                    <Input
-                                        id='unitThreshold'
-                                        name='unitThreshold'
-                                        type='number'
-                                        value={formData.unitThreshold}
-                                        onChange={handleInputChange}
-                                        min='0'
-                                        disabled={isReadOnly}
-                                        className={
-                                            isReadOnly ? 'bg-gray-100' : ''
-                                        }
-                                    />
-                                </div>
+                                {isEnergyUnit && (
+                                    <div className='space-y-2'>
+                                        <Label htmlFor='unitType'>
+                                            Unit Type
+                                        </Label>
+                                        <Input
+                                            id='unitType'
+                                            name='unitType'
+                                            value={formData.unitType}
+                                            onChange={handleInputChange}
+                                            placeholder='Enter unit type (e.g., ENERGY)'
+                                            disabled
+                                            className={
+                                                isReadOnly ? 'bg-gray-100' : ''
+                                            }
+                                        />
+                                    </div>
+                                )}
                             </div>
 
                             {isStockUnit && (
