@@ -91,7 +91,9 @@ export function EditUnitDialog({
     const { toast } = useToast();
 
     const isStockUnit = unit?.standardCategoryId === 'STOCK_CATEGORY';
-    const isVirtualNode = unit?.standardCategoryId === 'VIRTUAL_CATEGORY' || unit?.standardCategoryId === 'VIRTUAL_NODE';
+    const isVirtualNode =
+        unit?.standardCategoryId === 'VIRTUAL_CATEGORY' ||
+        unit?.standardCategoryId === 'VIRTUAL_NODE';
     const isQualityUnit = unit?.standardCategoryId === 'QUALITY_CATEGORY';
     const isEnergyUnit = unit?.standardCategoryId === 'ENERGY_CATEGORY';
 
@@ -101,12 +103,16 @@ export function EditUnitDialog({
             if (!industryId) return;
 
             try {
-                const response = await fetch(`https://admin-aquagen-api-bfckdag2aydtegc2.southindia-01.azurewebsites.net/api/admin/industry/${industryId}`, {
-                    headers: {
-                        accept: 'application/json',
-                        Authorization: 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJmcmVzaCI6dHJ1ZSwiaWF0IjoxNzM0MzI2NDU2LCJqdGkiOiI0NmFhOTRhNS00MDY3LTQ0OWEtOWUxYy1kYTU5MWZkMDZhYmIiLCJ0eXBlIjoiYWNjZXNzIiwic3ViIjoiSU5URVJOQUwiLCJuYmYiOjE3MzQzMjY0NTYsImV4cCI6MTc2NTg2MjQ1NiwidXNlcklkIjoiSU5URVJOQUxfREVGQVVMVF92YXJ1biIsImVtYWlsIjoidmFydW5AYXF1YWdlbi5jb20iLCJ1c2VybmFtZSI6InZhcnVuIiwibG9naW5UeXBlIjoiQURNSU5fREVGQVVMVCIsInJvbGUiOiJ1c2VyIiwicGVybWlzc2lvbnMiOlsiU1VQRVJfVVNFUiJdfQ.GsEQUEHCyvAHgvcUDbrZfIclUQqoB6Z61Q8IltLqjiA',
-                    },
-                });
+                const response = await fetch(
+                    `https://admin-aquagen-api-bfckdag2aydtegc2.southindia-01.azurewebsites.net/api/admin/industry/${industryId}`,
+                    {
+                        headers: {
+                            accept: 'application/json',
+                            Authorization:
+                                'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJmcmVzaCI6dHJ1ZSwiaWF0IjoxNzM0MzI2NDU2LCJqdGkiOiI0NmFhOTRhNS00MDY3LTQ0OWEtOWUxYy1kYTU5MWZkMDZhYmIiLCJ0eXBlIjoiYWNjZXNzIiwic3ViIjoiSU5URVJOQUwiLCJuYmYiOjE3MzQzMjY0NTYsImV4cCI6MTc2NTg2MjQ1NiwidXNlcklkIjoiSU5URVJOQUxfREVGQVVMVF92YXJ1biIsImVtYWlsIjoidmFydW5AYXF1YWdlbi5jb20iLCJ1c2VybmFtZSI6InZhcnVuIiwibG9naW5UeXBlIjoiQURNSU5fREVGQVVMVCIsInJvbGUiOiJ1c2VyIiwicGVybWlzc2lvbnMiOlsiU1VQRVJfVVNFUiJdfQ.GsEQUEHCyvAHgvcUDbrZfIclUQqoB6Z61Q8IltLqjiA',
+                        },
+                    }
+                );
 
                 if (response.ok) {
                     const data = await response.json();
@@ -129,14 +135,16 @@ export function EditUnitDialog({
                 flowFactor: unit.flowFactor || 1,
                 unitThreshold: unit.unitThreshold || 0,
                 isDeployed: unit.isDeployed || false,
-                alertEnabled: unit.alertEnabled !== undefined ? unit.alertEnabled : true,
+                alertEnabled:
+                    unit.alertEnabled !== undefined ? unit.alertEnabled : true,
                 interpoaltionDisabled: unit.interpoaltionDisabled || false,
                 // Stock-specific fields
                 height: unit.height || 0,
                 maxCapacity: unit.maxCapacity || 0,
                 // IoT Hub Config
                 iothubdeviceId: unit.iothubConfig?.iothubdeviceId || '',
-                iothubdeviceType: unit.iothubConfig?.iothubdeviceType || 'EXTERNAL',
+                iothubdeviceType:
+                    unit.iothubConfig?.iothubdeviceType || 'EXTERNAL',
                 slaveId: unit.iothubConfig?.slaveId || 1,
                 metertype: unit.iothubConfig?.metertype || 'RS485',
                 streamId: unit.iothubConfig?.streamId || '',
@@ -165,8 +173,9 @@ export function EditUnitDialog({
         setIsLoading(true);
 
         try {
-            const apiEndpoint = 'https://admin-aquagen-api-bfckdag2aydtegc2.southindia-01.azurewebsites.net/api/admin/unit/';
-            
+            const apiEndpoint =
+                'https://admin-aquagen-api-bfckdag2aydtegc2.southindia-01.azurewebsites.net/api/admin/unit/';
+
             let unitModel: any = {
                 deviceId: formData.deviceId,
                 unitId: unit.unitId,
@@ -266,7 +275,7 @@ export function EditUnitDialog({
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (!hasFullAccess()) return;
-        
+
         const { name, value, type } = e.target;
         setFormData((prev) => ({
             ...prev,
@@ -275,46 +284,61 @@ export function EditUnitDialog({
     };
 
     const addMetaUnit = () => {
-        if (!hasFullAccess() || !newUnitInput.trim() || formData.metaUnits.includes(newUnitInput.trim())) return;
-        setFormData(prev => ({
+        if (
+            !hasFullAccess() ||
+            !newUnitInput.trim() ||
+            formData.metaUnits.includes(newUnitInput.trim())
+        )
+            return;
+        setFormData((prev) => ({
             ...prev,
-            metaUnits: [...prev.metaUnits, newUnitInput.trim()]
+            metaUnits: [...prev.metaUnits, newUnitInput.trim()],
         }));
         setNewUnitInput('');
     };
 
     const removeMetaUnit = (unitId: string) => {
         if (!hasFullAccess()) return;
-        setFormData(prev => ({
+        setFormData((prev) => ({
             ...prev,
-            metaUnits: prev.metaUnits.filter(id => id !== unitId)
+            metaUnits: prev.metaUnits.filter((id) => id !== unitId),
         }));
     };
 
     const addMetaSubCategory = () => {
-        if (!hasFullAccess() || !newSubCategoryInput.trim() || formData.metaSubCategories.includes(newSubCategoryInput.trim())) return;
-        setFormData(prev => ({
+        if (
+            !hasFullAccess() ||
+            !newSubCategoryInput.trim() ||
+            formData.metaSubCategories.includes(newSubCategoryInput.trim())
+        )
+            return;
+        setFormData((prev) => ({
             ...prev,
-            metaSubCategories: [...prev.metaSubCategories, newSubCategoryInput.trim()]
+            metaSubCategories: [
+                ...prev.metaSubCategories,
+                newSubCategoryInput.trim(),
+            ],
         }));
         setNewSubCategoryInput('');
     };
 
     const removeMetaSubCategory = (subCategoryId: string) => {
         if (!hasFullAccess()) return;
-        setFormData(prev => ({
+        setFormData((prev) => ({
             ...prev,
-            metaSubCategories: prev.metaSubCategories.filter(id => id !== subCategoryId)
+            metaSubCategories: prev.metaSubCategories.filter(
+                (id) => id !== subCategoryId
+            ),
         }));
     };
 
     const addQualityParam = (paramKey: string) => {
         if (!hasFullAccess() || formData.params.includes(paramKey)) return;
-        
-        const param = QUALITY_PARAMS.find(p => p.key === paramKey);
+
+        const param = QUALITY_PARAMS.find((p) => p.key === paramKey);
         if (!param) return;
 
-        setFormData(prev => ({
+        setFormData((prev) => ({
             ...prev,
             params: [...prev.params, paramKey],
             siUnit: { ...prev.siUnit, [paramKey]: param.unit },
@@ -322,36 +346,65 @@ export function EditUnitDialog({
             highThreshold: { ...prev.highThreshold, [paramKey]: 100 },
             min: { ...prev.min, [paramKey]: 0 },
             max: { ...prev.max, [paramKey]: 1000 },
-            alertEnabledParams: { ...prev.alertEnabledParams, [paramKey]: false },
+            alertEnabledParams: {
+                ...prev.alertEnabledParams,
+                [paramKey]: false,
+            },
         }));
     };
 
     const removeQualityParam = (paramKey: string) => {
         if (!hasFullAccess()) return;
-        
-        setFormData(prev => ({
+
+        setFormData((prev) => ({
             ...prev,
-            params: prev.params.filter(p => p !== paramKey),
-            siUnit: Object.fromEntries(Object.entries(prev.siUnit).filter(([key]) => key !== paramKey)),
-            lowThreshold: Object.fromEntries(Object.entries(prev.lowThreshold).filter(([key]) => key !== paramKey)),
-            highThreshold: Object.fromEntries(Object.entries(prev.highThreshold).filter(([key]) => key !== paramKey)),
-            min: Object.fromEntries(Object.entries(prev.min).filter(([key]) => key !== paramKey)),
-            max: Object.fromEntries(Object.entries(prev.max).filter(([key]) => key !== paramKey)),
-            alertEnabledParams: Object.fromEntries(Object.entries(prev.alertEnabledParams).filter(([key]) => key !== paramKey)),
+            params: prev.params.filter((p) => p !== paramKey),
+            siUnit: Object.fromEntries(
+                Object.entries(prev.siUnit).filter(([key]) => key !== paramKey)
+            ),
+            lowThreshold: Object.fromEntries(
+                Object.entries(prev.lowThreshold).filter(
+                    ([key]) => key !== paramKey
+                )
+            ),
+            highThreshold: Object.fromEntries(
+                Object.entries(prev.highThreshold).filter(
+                    ([key]) => key !== paramKey
+                )
+            ),
+            min: Object.fromEntries(
+                Object.entries(prev.min).filter(([key]) => key !== paramKey)
+            ),
+            max: Object.fromEntries(
+                Object.entries(prev.max).filter(([key]) => key !== paramKey)
+            ),
+            alertEnabledParams: Object.fromEntries(
+                Object.entries(prev.alertEnabledParams).filter(
+                    ([key]) => key !== paramKey
+                )
+            ),
         }));
     };
 
-    const updateQualityParam = (paramKey: string, field: string, value: any) => {
+    const updateQualityParam = (
+        paramKey: string,
+        field: string,
+        value: any
+    ) => {
         if (!hasFullAccess()) return;
-        
-        setFormData(prev => {
+
+        setFormData((prev) => {
             const currentFieldValue = prev[field as keyof typeof prev];
             // Ensure we're spreading from an object type
-            const safeFieldValue = typeof currentFieldValue === 'object' && currentFieldValue !== null ? currentFieldValue : {};
-            
+            const safeFieldValue =
+                typeof currentFieldValue === 'object' &&
+                currentFieldValue !== null
+                    ? currentFieldValue
+                    : {};
+
             return {
                 ...prev,
-                [field]: { ...safeFieldValue, [paramKey]: value }
+                [field]: { ...safeFieldValue, [paramKey]: value },
             };
         });
     };
@@ -371,26 +424,43 @@ export function EditUnitDialog({
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-                  <DialogContent className="sm:max-w-4xl max-h-[80vh] overflow-y-auto">
-                    <div className="flex items-center justify-between mb-4">
-                      <h2 className="text-lg font-semibold">
+            <DialogContent className='sm:max-w-4xl max-h-[80vh] overflow-y-auto'>
+                <div className='flex items-center justify-between mb-4'>
+                    <h2 className='text-lg font-semibold'>
                         {isReadOnly ? 'View Unit Details' : 'Edit Unit'}
-                      </h2>
-                      <p className="text-sm text-muted-foreground">
-                        {isReadOnly ? 'View the unit details below.' : 'Update the unit details below.'}
-                      </p>
-                    </div>
-                
-                    <form onSubmit={handleSubmit} className="space-y-6">
-                      <Tabs defaultValue="basic" className="w-full">
-                        <TabsList className={`grid w-full grid-cols-${tabsList.length} gap-1`}>
-                          <TabsTrigger value="basic">Basic</TabsTrigger>
-                          <TabsTrigger value="iothub">IoT Hub</TabsTrigger>
-                          <TabsTrigger value="settings">Settings</TabsTrigger>
-                          {isVirtualNode && <TabsTrigger value="meta">Meta</TabsTrigger>}
-                          {isQualityUnit && <TabsTrigger value="params">Parameters</TabsTrigger>}
-                        </TabsList>
+                    </h2>
+                    <p className='text-sm text-muted-foreground'>
+                        {isReadOnly
+                            ? 'View the unit details below.'
+                            : 'Update the unit details below.'}
+                    </p>
+                </div>
 
+                <form onSubmit={handleSubmit} className='space-y-6'>
+                    <Tabs defaultValue='basic' className='w-full'>
+                        <TabsList
+                            className={`flex w-full justify-evenly center gap-1`}
+                        >
+                            <TabsTrigger value='basic' className='flex-1'>
+                                Basic
+                            </TabsTrigger>
+                            <TabsTrigger value='iothub' className='flex-1'>
+                                IoT Hub
+                            </TabsTrigger>
+                            <TabsTrigger value='settings' className='flex-1'>
+                                Settings
+                            </TabsTrigger>
+                            {isVirtualNode && (
+                                <TabsTrigger value='meta' className='flex-1'>
+                                    Meta
+                                </TabsTrigger>
+                            )}
+                            {isQualityUnit && (
+                                <TabsTrigger value='params' className='flex-1'>
+                                    Parameters
+                                </TabsTrigger>
+                            )}
+                        </TabsList>
 
                         <TabsContent value='basic' className='space-y-4'>
                             <div className='grid grid-cols-2 gap-4'>
@@ -412,7 +482,9 @@ export function EditUnitDialog({
                                         onChange={handleInputChange}
                                         placeholder='Enter unit name'
                                         disabled={isReadOnly}
-                                        className={isReadOnly ? 'bg-gray-100' : ''}
+                                        className={
+                                            isReadOnly ? 'bg-gray-100' : ''
+                                        }
                                         required={!isReadOnly}
                                     />
                                 </div>
@@ -427,12 +499,16 @@ export function EditUnitDialog({
                                         onChange={handleInputChange}
                                         placeholder='Enter device ID'
                                         disabled={isReadOnly}
-                                        className={isReadOnly ? 'bg-gray-100' : ''}
+                                        className={
+                                            isReadOnly ? 'bg-gray-100' : ''
+                                        }
                                     />
                                 </div>
                                 {isEnergyUnit && (
                                     <div className='space-y-2'>
-                                        <Label htmlFor='unitType'>Unit Type</Label>
+                                        <Label htmlFor='unitType'>
+                                            Unit Type
+                                        </Label>
                                         <Input
                                             id='unitType'
                                             name='unitType'
@@ -440,16 +516,21 @@ export function EditUnitDialog({
                                             onChange={handleInputChange}
                                             placeholder='Enter unit type (e.g., ENERGY)'
                                             disabled
-                                            className={isReadOnly ? 'bg-gray-100' : ''}
+                                            className={
+                                                isReadOnly ? 'bg-gray-100' : ''
+                                            }
                                         />
                                     </div>
                                 )}
                             </div>
-                            
+
                             <div className='grid grid-cols-2 gap-4'>
-                                {(isEnergyUnit || (!isStockUnit && !isEnergyUnit)) && (
+                                {(isEnergyUnit ||
+                                    (!isStockUnit && !isEnergyUnit)) && (
                                     <div className='space-y-2'>
-                                        <Label htmlFor='flowFactor'>Flow Factor</Label>
+                                        <Label htmlFor='flowFactor'>
+                                            Flow Factor
+                                        </Label>
                                         <Input
                                             id='flowFactor'
                                             name='flowFactor'
@@ -458,12 +539,16 @@ export function EditUnitDialog({
                                             onChange={handleInputChange}
                                             min='0'
                                             disabled={isReadOnly}
-                                            className={isReadOnly ? 'bg-gray-100' : ''}
+                                            className={
+                                                isReadOnly ? 'bg-gray-100' : ''
+                                            }
                                         />
                                     </div>
                                 )}
                                 <div className='space-y-2'>
-                                    <Label htmlFor='unitThreshold'>Unit Threshold</Label>
+                                    <Label htmlFor='unitThreshold'>
+                                        Unit Threshold
+                                    </Label>
                                     <Input
                                         id='unitThreshold'
                                         name='unitThreshold'
@@ -472,11 +557,13 @@ export function EditUnitDialog({
                                         onChange={handleInputChange}
                                         min='0'
                                         disabled={isReadOnly}
-                                        className={isReadOnly ? 'bg-gray-100' : ''}
+                                        className={
+                                            isReadOnly ? 'bg-gray-100' : ''
+                                        }
                                     />
                                 </div>
                             </div>
-                            
+
                             {isStockUnit && (
                                 <div className='grid grid-cols-2 gap-4'>
                                     <div className='space-y-2'>
@@ -489,11 +576,15 @@ export function EditUnitDialog({
                                             onChange={handleInputChange}
                                             min='0'
                                             disabled={isReadOnly}
-                                            className={isReadOnly ? 'bg-gray-100' : ''}
+                                            className={
+                                                isReadOnly ? 'bg-gray-100' : ''
+                                            }
                                         />
                                     </div>
                                     <div className='space-y-2'>
-                                        <Label htmlFor='maxCapacity'>Max Capacity</Label>
+                                        <Label htmlFor='maxCapacity'>
+                                            Max Capacity
+                                        </Label>
                                         <Input
                                             id='maxCapacity'
                                             name='maxCapacity'
@@ -502,7 +593,9 @@ export function EditUnitDialog({
                                             onChange={handleInputChange}
                                             min='0'
                                             disabled={isReadOnly}
-                                            className={isReadOnly ? 'bg-gray-100' : ''}
+                                            className={
+                                                isReadOnly ? 'bg-gray-100' : ''
+                                            }
                                         />
                                     </div>
                                 </div>
@@ -512,7 +605,9 @@ export function EditUnitDialog({
                         <TabsContent value='iothub' className='space-y-4'>
                             <div className='grid grid-cols-2 gap-4'>
                                 <div className='space-y-2'>
-                                    <Label htmlFor='iothubdeviceId'>IoT Hub Device ID</Label>
+                                    <Label htmlFor='iothubdeviceId'>
+                                        IoT Hub Device ID
+                                    </Label>
                                     <Input
                                         id='iothubdeviceId'
                                         name='iothubdeviceId'
@@ -520,29 +615,46 @@ export function EditUnitDialog({
                                         onChange={handleInputChange}
                                         placeholder='Enter IoT Hub Device ID'
                                         disabled={isReadOnly}
-                                        className={isReadOnly ? 'bg-gray-100' : ''}
+                                        className={
+                                            isReadOnly ? 'bg-gray-100' : ''
+                                        }
                                     />
                                 </div>
                                 <div className='space-y-2'>
-                                    <Label htmlFor='iothubdeviceType'>IoT Hub Device Type</Label>
+                                    <Label htmlFor='iothubdeviceType'>
+                                        IoT Hub Device Type
+                                    </Label>
                                     <Select
                                         value={formData.iothubdeviceType}
                                         onValueChange={(value) =>
-                                            !isReadOnly && setFormData((prev) => ({
+                                            !isReadOnly &&
+                                            setFormData((prev) => ({
                                                 ...prev,
                                                 iothubdeviceType: value,
                                             }))
                                         }
                                         disabled={isReadOnly}
                                     >
-                                        <SelectTrigger className={isReadOnly ? 'bg-gray-100' : ''}>
+                                        <SelectTrigger
+                                            className={
+                                                isReadOnly ? 'bg-gray-100' : ''
+                                            }
+                                        >
                                             <SelectValue placeholder='Select device type' />
                                         </SelectTrigger>
                                         <SelectContent>
-                                            <SelectItem value='EXTERNAL'>External</SelectItem>
-                                            <SelectItem value='teltonika'>Teltonika</SelectItem>
-                                            <SelectItem value='aquagen lite'>Aquagen Lite</SelectItem>
-                                            <SelectItem value='w-link'>W-Link</SelectItem>
+                                            <SelectItem value='EXTERNAL'>
+                                                External
+                                            </SelectItem>
+                                            <SelectItem value='teltonika'>
+                                                Teltonika
+                                            </SelectItem>
+                                            <SelectItem value='aquagen lite'>
+                                                Aquagen Lite
+                                            </SelectItem>
+                                            <SelectItem value='w-link'>
+                                                W-Link
+                                            </SelectItem>
                                         </SelectContent>
                                     </Select>
                                 </div>
@@ -559,27 +671,40 @@ export function EditUnitDialog({
                                         onChange={handleInputChange}
                                         min='0'
                                         disabled={isReadOnly}
-                                        className={isReadOnly ? 'bg-gray-100' : ''}
+                                        className={
+                                            isReadOnly ? 'bg-gray-100' : ''
+                                        }
                                     />
                                 </div>
                                 <div className='space-y-2'>
-                                    <Label htmlFor='metertype'>Meter Type</Label>
+                                    <Label htmlFor='metertype'>
+                                        Meter Type
+                                    </Label>
                                     <Select
                                         value={formData.metertype}
                                         onValueChange={(value) =>
-                                            !isReadOnly && setFormData((prev) => ({
+                                            !isReadOnly &&
+                                            setFormData((prev) => ({
                                                 ...prev,
                                                 metertype: value,
                                             }))
                                         }
                                         disabled={isReadOnly}
                                     >
-                                        <SelectTrigger className={isReadOnly ? 'bg-gray-100' : ''}>
+                                        <SelectTrigger
+                                            className={
+                                                isReadOnly ? 'bg-gray-100' : ''
+                                            }
+                                        >
                                             <SelectValue placeholder='Select meter type' />
                                         </SelectTrigger>
                                         <SelectContent>
-                                            <SelectItem value='RS485'>RS485</SelectItem>
-                                            <SelectItem value='PULSE'>PULSE</SelectItem>
+                                            <SelectItem value='RS485'>
+                                                RS485
+                                            </SelectItem>
+                                            <SelectItem value='PULSE'>
+                                                PULSE
+                                            </SelectItem>
                                         </SelectContent>
                                     </Select>
                                 </div>
@@ -588,7 +713,9 @@ export function EditUnitDialog({
                             {isStockUnit && (
                                 <div className='grid grid-cols-2 gap-4'>
                                     <div className='space-y-2'>
-                                        <Label htmlFor='tankHeight'>Tank Height</Label>
+                                        <Label htmlFor='tankHeight'>
+                                            Tank Height
+                                        </Label>
                                         <Input
                                             id='tankHeight'
                                             name='tankHeight'
@@ -597,11 +724,15 @@ export function EditUnitDialog({
                                             onChange={handleInputChange}
                                             min='0'
                                             disabled={isReadOnly}
-                                            className={isReadOnly ? 'bg-gray-100' : ''}
+                                            className={
+                                                isReadOnly ? 'bg-gray-100' : ''
+                                            }
                                         />
                                     </div>
                                     <div className='space-y-2'>
-                                        <Label htmlFor='sensorHeight'>Sensor Height</Label>
+                                        <Label htmlFor='sensorHeight'>
+                                            Sensor Height
+                                        </Label>
                                         <Input
                                             id='sensorHeight'
                                             name='sensorHeight'
@@ -610,7 +741,9 @@ export function EditUnitDialog({
                                             onChange={handleInputChange}
                                             min='0'
                                             disabled={isReadOnly}
-                                            className={isReadOnly ? 'bg-gray-100' : ''}
+                                            className={
+                                                isReadOnly ? 'bg-gray-100' : ''
+                                            }
                                         />
                                     </div>
                                 </div>
@@ -637,14 +770,17 @@ export function EditUnitDialog({
                                         id='isDeployed'
                                         checked={formData.isDeployed}
                                         onCheckedChange={(checked) =>
-                                            !isReadOnly && setFormData((prev) => ({
+                                            !isReadOnly &&
+                                            setFormData((prev) => ({
                                                 ...prev,
                                                 isDeployed: checked as boolean,
                                             }))
                                         }
                                         disabled={isReadOnly}
                                     />
-                                    <Label htmlFor='isDeployed'>Is Deployed</Label>
+                                    <Label htmlFor='isDeployed'>
+                                        Is Deployed
+                                    </Label>
                                 </div>
                                 {!isQualityUnit && (
                                     <div className='flex items-center space-x-2'>
@@ -652,14 +788,18 @@ export function EditUnitDialog({
                                             id='alertEnabled'
                                             checked={formData.alertEnabled}
                                             onCheckedChange={(checked) =>
-                                                !isReadOnly && setFormData((prev) => ({
+                                                !isReadOnly &&
+                                                setFormData((prev) => ({
                                                     ...prev,
-                                                    alertEnabled: checked as boolean,
+                                                    alertEnabled:
+                                                        checked as boolean,
                                                 }))
                                             }
                                             disabled={isReadOnly}
                                         />
-                                        <Label htmlFor='alertEnabled'>Alert Enabled</Label>
+                                        <Label htmlFor='alertEnabled'>
+                                            Alert Enabled
+                                        </Label>
                                     </div>
                                 )}
                                 <div className='flex items-center space-x-2'>
@@ -667,9 +807,11 @@ export function EditUnitDialog({
                                         id='interpoaltionDisabled'
                                         checked={formData.interpoaltionDisabled}
                                         onCheckedChange={(checked) =>
-                                            !isReadOnly && setFormData((prev) => ({
+                                            !isReadOnly &&
+                                            setFormData((prev) => ({
                                                 ...prev,
-                                                interpoaltionDisabled: checked as boolean,
+                                                interpoaltionDisabled:
+                                                    checked as boolean,
                                             }))
                                         }
                                         disabled={isReadOnly}
@@ -685,54 +827,78 @@ export function EditUnitDialog({
                             <TabsContent value='meta' className='space-y-4'>
                                 <div className='space-y-6'>
                                     <div className='space-y-3'>
-                                        <Label className='text-base font-medium'>Units</Label>
-                                        
+                                        <Label className='text-base font-medium'>
+                                            Units
+                                        </Label>
+
                                         {!isReadOnly && (
                                             <div className='flex gap-2'>
                                                 <Input
                                                     value={newUnitInput}
-                                                    onChange={(e) => setNewUnitInput(e.target.value)}
+                                                    onChange={(e) =>
+                                                        setNewUnitInput(
+                                                            e.target.value
+                                                        )
+                                                    }
                                                     placeholder='Enter unit ID'
                                                     className='flex-1'
                                                 />
                                                 <Button
-                                                    type="button"
+                                                    type='button'
                                                     onClick={addMetaUnit}
-                                                    size="sm"
+                                                    size='sm'
                                                 >
-                                                    <Plus className="h-4 w-4" />
+                                                    <Plus className='h-4 w-4' />
                                                     Add
                                                 </Button>
                                             </div>
                                         )}
-                                        
+
                                         <div className='min-h-20 border rounded-lg p-3'>
                                             {formData.metaUnits.length > 0 ? (
                                                 <div className='space-y-2'>
-                                                    {formData.metaUnits.map((unitId) => (
-                                                        <div key={unitId} className='flex items-center justify-between p-2 bg-gray-50 rounded'>
-                                                            <span className='font-medium text-sm'>{unitId}</span>
-                                                            {!isReadOnly && (
-                                                                <Button
-                                                                    type="button"
-                                                                    size="sm"
-                                                                    variant="outline"
-                                                                    onClick={() => removeMetaUnit(unitId)}
-                                                                >
-                                                                    <X className="h-4 w-4" />
-                                                                </Button>
-                                                            )}
-                                                        </div>
-                                                    ))}
+                                                    {formData.metaUnits.map(
+                                                        (unitId) => (
+                                                            <div
+                                                                key={unitId}
+                                                                className='flex items-center justify-between p-2 bg-gray-50 rounded'
+                                                            >
+                                                                <span className='font-medium text-sm'>
+                                                                    {unitId}
+                                                                </span>
+                                                                {!isReadOnly && (
+                                                                    <Button
+                                                                        type='button'
+                                                                        size='sm'
+                                                                        variant='outline'
+                                                                        onClick={() =>
+                                                                            removeMetaUnit(
+                                                                                unitId
+                                                                            )
+                                                                        }
+                                                                    >
+                                                                        <X className='h-4 w-4' />
+                                                                    </Button>
+                                                                )}
+                                                            </div>
+                                                        )
+                                                    )}
                                                 </div>
                                             ) : (
-                                                <p className='text-sm text-gray-500 italic text-center py-4'>No units added</p>
+                                                <p className='text-sm text-gray-500 italic text-center py-4'>
+                                                    No units added
+                                                </p>
                                             )}
                                         </div>
                                     </div>
 
                                     <div className='space-y-2'>
-                                        <Label htmlFor='metaCalculations' className='text-base font-medium'>Calculations</Label>
+                                        <Label
+                                            htmlFor='metaCalculations'
+                                            className='text-base font-medium'
+                                        >
+                                            Calculations
+                                        </Label>
                                         <Input
                                             id='metaCalculations'
                                             name='metaCalculations'
@@ -740,53 +906,75 @@ export function EditUnitDialog({
                                             onChange={handleInputChange}
                                             placeholder='Format: {unitId1} + {unitId2} - {subCategoryId}'
                                             disabled={isReadOnly}
-                                            className={isReadOnly ? 'bg-gray-100' : ''}
+                                            className={
+                                                isReadOnly ? 'bg-gray-100' : ''
+                                            }
                                         />
                                     </div>
 
                                     <div className='space-y-3'>
-                                        <Label className='text-base font-medium'>Sub Categories</Label>
-                                        
+                                        <Label className='text-base font-medium'>
+                                            Sub Categories
+                                        </Label>
+
                                         {!isReadOnly && (
                                             <div className='flex gap-2'>
                                                 <Input
                                                     value={newSubCategoryInput}
-                                                    onChange={(e) => setNewSubCategoryInput(e.target.value)}
+                                                    onChange={(e) =>
+                                                        setNewSubCategoryInput(
+                                                            e.target.value
+                                                        )
+                                                    }
                                                     placeholder='Enter subcategory ID'
                                                     className='flex-1'
                                                 />
                                                 <Button
-                                                    type="button"
+                                                    type='button'
                                                     onClick={addMetaSubCategory}
-                                                    size="sm"
+                                                    size='sm'
                                                 >
-                                                    <Plus className="h-4 w-4" />
+                                                    <Plus className='h-4 w-4' />
                                                     Add
                                                 </Button>
                                             </div>
                                         )}
-                                        
+
                                         <div className='min-h-20 border rounded-lg p-3'>
-                                            {formData.metaSubCategories.length > 0 ? (
+                                            {formData.metaSubCategories.length >
+                                            0 ? (
                                                 <div className='space-y-2'>
-                                                    {formData.metaSubCategories.map((subCat) => (
-                                                        <div key={subCat} className='flex items-center justify-between p-2 bg-gray-50 rounded'>
-                                                            <span className='font-medium text-sm'>{subCat}</span>
-                                                            {!isReadOnly && (
-                                                                <Button
-                                                                    type="button"
-                                                                    size="sm"
-                                                                    variant="outline"
-                                                                    onClick={() => removeMetaSubCategory(subCat)}
-                                                                >
-                                                                    <X className="h-4 w-4" />
-                                                                </Button>
-                                                            )}
-                                                        </div>
-                                                    ))}
+                                                    {formData.metaSubCategories.map(
+                                                        (subCat) => (
+                                                            <div
+                                                                key={subCat}
+                                                                className='flex items-center justify-between p-2 bg-gray-50 rounded'
+                                                            >
+                                                                <span className='font-medium text-sm'>
+                                                                    {subCat}
+                                                                </span>
+                                                                {!isReadOnly && (
+                                                                    <Button
+                                                                        type='button'
+                                                                        size='sm'
+                                                                        variant='outline'
+                                                                        onClick={() =>
+                                                                            removeMetaSubCategory(
+                                                                                subCat
+                                                                            )
+                                                                        }
+                                                                    >
+                                                                        <X className='h-4 w-4' />
+                                                                    </Button>
+                                                                )}
+                                                            </div>
+                                                        )
+                                                    )}
                                                 </div>
                                             ) : (
-                                                <p className='text-sm text-gray-500 italic text-center py-4'>No subcategories added</p>
+                                                <p className='text-sm text-gray-500 italic text-center py-4'>
+                                                    No subcategories added
+                                                </p>
                                             )}
                                         </div>
                                     </div>
@@ -800,14 +988,25 @@ export function EditUnitDialog({
                                     <div className='flex items-center justify-between'>
                                         <Label>Parameters</Label>
                                         {!isReadOnly && (
-                                            <Select onValueChange={addQualityParam}>
-                                                <SelectTrigger className="w-48">
-                                                    <SelectValue placeholder="Add parameter..." />
+                                            <Select
+                                                onValueChange={addQualityParam}
+                                            >
+                                                <SelectTrigger className='w-48'>
+                                                    <SelectValue placeholder='Add parameter...' />
                                                 </SelectTrigger>
                                                 <SelectContent>
-                                                    {QUALITY_PARAMS.filter(p => !formData.params.includes(p.key)).map(param => (
-                                                        <SelectItem key={param.key} value={param.key}>
-                                                            {param.label} ({param.unit})
+                                                    {QUALITY_PARAMS.filter(
+                                                        (p) =>
+                                                            !formData.params.includes(
+                                                                p.key
+                                                            )
+                                                    ).map((param) => (
+                                                        <SelectItem
+                                                            key={param.key}
+                                                            value={param.key}
+                                                        >
+                                                            {param.label} (
+                                                            {param.unit})
                                                         </SelectItem>
                                                     ))}
                                                 </SelectContent>
@@ -815,76 +1014,182 @@ export function EditUnitDialog({
                                         )}
                                     </div>
 
-                                    {formData.params.map(paramKey => {
-                                        const param = QUALITY_PARAMS.find(p => p.key === paramKey);
+                                    {formData.params.map((paramKey) => {
+                                        const param = QUALITY_PARAMS.find(
+                                            (p) => p.key === paramKey
+                                        );
                                         if (!param) return null;
 
                                         return (
-                                            <div key={paramKey} className='border rounded-lg p-4 space-y-3'>
+                                            <div
+                                                key={paramKey}
+                                                className='border rounded-lg p-4 space-y-3'
+                                            >
                                                 <div className='flex items-center justify-between'>
-                                                    <h4 className='font-medium'>{param.label}</h4>
+                                                    <h4 className='font-medium'>
+                                                        {param.label}
+                                                    </h4>
                                                     {!isReadOnly && (
                                                         <Button
-                                                            type="button"
-                                                            size="sm"
-                                                            variant="outline"
-                                                            onClick={() => removeQualityParam(paramKey)}
+                                                            type='button'
+                                                            size='sm'
+                                                            variant='outline'
+                                                            onClick={() =>
+                                                                removeQualityParam(
+                                                                    paramKey
+                                                                )
+                                                            }
                                                         >
-                                                            <X className="h-4 w-4" />
+                                                            <X className='h-4 w-4' />
                                                         </Button>
                                                     )}
                                                 </div>
-                                                
+
                                                 <div className='grid grid-cols-2 gap-3'>
                                                     <div className='space-y-2'>
-                                                        <Label>Low Threshold</Label>
+                                                        <Label>
+                                                            Low Threshold
+                                                        </Label>
                                                         <Input
-                                                            type="number"
-                                                            value={formData.lowThreshold[paramKey] || 0}
-                                                            onChange={(e) => updateQualityParam(paramKey, 'lowThreshold', Number(e.target.value))}
-                                                            disabled={isReadOnly}
-                                                            className={isReadOnly ? 'bg-gray-100' : ''}
+                                                            type='number'
+                                                            value={
+                                                                formData
+                                                                    .lowThreshold[
+                                                                    paramKey
+                                                                ] || 0
+                                                            }
+                                                            onChange={(e) =>
+                                                                updateQualityParam(
+                                                                    paramKey,
+                                                                    'lowThreshold',
+                                                                    Number(
+                                                                        e.target
+                                                                            .value
+                                                                    )
+                                                                )
+                                                            }
+                                                            disabled={
+                                                                isReadOnly
+                                                            }
+                                                            className={
+                                                                isReadOnly
+                                                                    ? 'bg-gray-100'
+                                                                    : ''
+                                                            }
                                                         />
                                                     </div>
                                                     <div className='space-y-2'>
-                                                        <Label>High Threshold</Label>
+                                                        <Label>
+                                                            High Threshold
+                                                        </Label>
                                                         <Input
-                                                            type="number"
-                                                            value={formData.highThreshold[paramKey] || 0}
-                                                            onChange={(e) => updateQualityParam(paramKey, 'highThreshold', Number(e.target.value))}
-                                                            disabled={isReadOnly}
-                                                            className={isReadOnly ? 'bg-gray-100' : ''}
+                                                            type='number'
+                                                            value={
+                                                                formData
+                                                                    .highThreshold[
+                                                                    paramKey
+                                                                ] || 0
+                                                            }
+                                                            onChange={(e) =>
+                                                                updateQualityParam(
+                                                                    paramKey,
+                                                                    'highThreshold',
+                                                                    Number(
+                                                                        e.target
+                                                                            .value
+                                                                    )
+                                                                )
+                                                            }
+                                                            disabled={
+                                                                isReadOnly
+                                                            }
+                                                            className={
+                                                                isReadOnly
+                                                                    ? 'bg-gray-100'
+                                                                    : ''
+                                                            }
                                                         />
                                                     </div>
                                                 </div>
-                                                
+
                                                 <div className='grid grid-cols-2 gap-3'>
                                                     <div className='space-y-2'>
                                                         <Label>Min Value</Label>
                                                         <Input
-                                                            type="number"
-                                                            value={formData.min[paramKey] || 0}
-                                                            onChange={(e) => updateQualityParam(paramKey, 'min', Number(e.target.value))}
-                                                            disabled={isReadOnly}
-                                                            className={isReadOnly ? 'bg-gray-100' : ''}
+                                                            type='number'
+                                                            value={
+                                                                formData.min[
+                                                                    paramKey
+                                                                ] || 0
+                                                            }
+                                                            onChange={(e) =>
+                                                                updateQualityParam(
+                                                                    paramKey,
+                                                                    'min',
+                                                                    Number(
+                                                                        e.target
+                                                                            .value
+                                                                    )
+                                                                )
+                                                            }
+                                                            disabled={
+                                                                isReadOnly
+                                                            }
+                                                            className={
+                                                                isReadOnly
+                                                                    ? 'bg-gray-100'
+                                                                    : ''
+                                                            }
                                                         />
                                                     </div>
                                                     <div className='space-y-2'>
                                                         <Label>Max Value</Label>
                                                         <Input
-                                                            type="number"
-                                                            value={formData.max[paramKey] || 0}
-                                                            onChange={(e) => updateQualityParam(paramKey, 'max', Number(e.target.value))}
-                                                            disabled={isReadOnly}
-                                                            className={isReadOnly ? 'bg-gray-100' : ''}
+                                                            type='number'
+                                                            value={
+                                                                formData.max[
+                                                                    paramKey
+                                                                ] || 0
+                                                            }
+                                                            onChange={(e) =>
+                                                                updateQualityParam(
+                                                                    paramKey,
+                                                                    'max',
+                                                                    Number(
+                                                                        e.target
+                                                                            .value
+                                                                    )
+                                                                )
+                                                            }
+                                                            disabled={
+                                                                isReadOnly
+                                                            }
+                                                            className={
+                                                                isReadOnly
+                                                                    ? 'bg-gray-100'
+                                                                    : ''
+                                                            }
                                                         />
                                                     </div>
                                                 </div>
 
                                                 <div className='flex items-center space-x-2'>
                                                     <Checkbox
-                                                        checked={formData.alertEnabledParams[paramKey] || false}
-                                                        onCheckedChange={(checked) => updateQualityParam(paramKey, 'alertEnabledParams', checked)}
+                                                        checked={
+                                                            formData
+                                                                .alertEnabledParams[
+                                                                paramKey
+                                                            ] || false
+                                                        }
+                                                        onCheckedChange={(
+                                                            checked
+                                                        ) =>
+                                                            updateQualityParam(
+                                                                paramKey,
+                                                                'alertEnabledParams',
+                                                                checked
+                                                            )
+                                                        }
                                                         disabled={isReadOnly}
                                                     />
                                                     <Label>Alert Enabled</Label>
