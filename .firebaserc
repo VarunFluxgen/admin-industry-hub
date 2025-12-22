@@ -1,0 +1,13 @@
+{
+  "projects": {},
+  "targets": {
+    "aquagen-f6d24": {
+      "hosting": {
+        "admin": [
+          "admin-aquagen"
+        ]
+      }
+    }
+  },
+  "etags": {}
+}
