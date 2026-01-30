@@ -49,6 +49,15 @@ const AVAILABLE_PERMISSIONS = [
     'RWI_EFFICIENCY_SAVINGS',
     'WATER_NEUTRALITY',
     'EFFICIENCY',
+    'MANUAL_NODE_ENTRY',
+    'ENERGY',
+    'ENERGY_ALERT',
+    'ACCOUNT_SETTINGS',
+    'WATER_RATIO',
+    'UWI',
+    'DISABLE_ENERGY_TOGGLE_BUTTON',
+    'WATER_RISK',
+    'WRI'
 ];
 
 export function PermissionsTable({ industryId }: PermissionsTableProps) {

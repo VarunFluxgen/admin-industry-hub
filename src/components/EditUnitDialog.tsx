@@ -575,6 +575,7 @@ export function EditUnitDialog({
                                             value={formData.height}
                                             onChange={handleInputChange}
                                             min='0'
+                                            step="any"
                                             disabled={isReadOnly}
                                             className={
                                                 isReadOnly ? 'bg-gray-100' : ''
@@ -723,6 +724,7 @@ export function EditUnitDialog({
                                             value={formData.tankHeight}
                                             onChange={handleInputChange}
                                             min='0'
+                                            step="any"
                                             disabled={isReadOnly}
                                             className={
                                                 isReadOnly ? 'bg-gray-100' : ''
@@ -740,6 +742,7 @@ export function EditUnitDialog({
                                             value={formData.sensorHeight}
                                             onChange={handleInputChange}
                                             min='0'
+                                            step="any"
                                             disabled={isReadOnly}
                                             className={
                                                 isReadOnly ? 'bg-gray-100' : ''
