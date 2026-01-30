@@ -1,4 +1,6 @@
 import { useState, useEffect } from 'react';
+import * as XLSX from 'xlsx';
+import { saveAs } from 'file-saver';
 import {
     Card,
     CardContent,
@@ -26,7 +28,7 @@ import {
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
-import { Edit, Plus, Calendar, AlertCircle } from 'lucide-react';
+import { Edit, Plus, Calendar, AlertCircle, Download } from 'lucide-react';
 import { logApiCall } from '@/utils/apiLogger';
 import { SearchableUnitSelect } from '@/components/SearchableUnitSelect';
 
@@ -290,14 +292,209 @@ export function UnitsMetaManager({ industryId, units }: UnitsMetaManagerProps) {
         }
     };
 
+    // Download functions
+    const createSheetData = (records: UnitMeta[]) => {
+        return records.map((r) => ({
+            'Unit ID': r.unitId || '',
+            'Unit Name': r.unitName || '',
+            'Created On': r.createdOn || '',
+            'Industry ID': r.industryId || '',
+            'Flow Factor': r.flowFactor || '',
+            'Meter Output Type': r.meterOutputType || '',
+            'Meter Make': r.meterMake || '',
+            'Meter Type': r.meterType || '',
+            'Meter Size': r.meterSize || '',
+            'Piezo Length': r.piezoLen || '',
+            'Piezo Cable Length': r.piezoCableLength || '',
+            'Serial No': r.serialNo || '',
+            'Sensor Size': r.sensorSize || '',
+            'IoT Make': r.iotMake || '',
+            'Device ID': r.deviceId || '',
+            'Device IMEI': r.deviceImei || '',
+            'Slave ID': r.slaveId || '',
+            'Network Provider': r.networkProvider || '',
+            'SIM Number': r.simNumber || '',
+            'Mobile Number': r.mobileNumber || '',
+            'Description': r.description || '',
+            'Problems Faced': r.problemsFaced || '',
+            'Remarks': r.remarks || '',
+            'Image URLs': Array.isArray(r.imageUrl) ? r.imageUrl.join(', ') : (r.imageUrl || ''),
+        }));
+    };
+
+    const downloadSelectedUnit = async () => {
+        if (!selectedUnitId) {
+            toast({
+                title: 'Select a unit',
+                description: 'Please select a unit to download',
+                variant: 'destructive',
+            });
+            return;
+        }
+
+        if (unitMetaRecords.length === 0) {
+            toast({
+                title: 'No data',
+                description: 'No meta data available for selected unit',
+                variant: 'destructive',
+            });
+            return;
+        }
+
+        try {
+            const workbook = XLSX.utils.book_new();
+            const sheet = XLSX.utils.json_to_sheet(createSheetData(unitMetaRecords));
+
+            const unitName = units.find((u) => u.unitId === selectedUnitId)?.unitName || selectedUnitId;
+            XLSX.utils.book_append_sheet(workbook, sheet, unitName.slice(0, 31));
+
+            const excelBuffer = XLSX.write(workbook, {
+                bookType: 'xlsx',
+                type: 'array',
+            });
+
+            saveAs(
+                new Blob([excelBuffer], {
+                    type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                }),
+                `unit_meta_${unitName}.xlsx`
+            );
+
+            toast({
+                title: 'Success',
+                description: 'Unit meta downloaded successfully',
+            });
+        } catch (error) {
+            toast({
+                title: 'Error',
+                description: 'Failed to download unit meta',
+                variant: 'destructive',
+            });
+        }
+    };
+
+    const downloadAllUnits = async () => {
+        if (units.length === 0) {
+            toast({
+                title: 'No units',
+                description: 'No units available to download',
+                variant: 'destructive',
+            });
+            return;
+        }
+
+        setIsLoading(true);
+
+        try {
+            const workbook = XLSX.utils.book_new();
+            let sheetCount = 0;
+
+            for (const unit of units) {
+                try {
+                    const response = await fetch(
+                        'https://admin-aquagen-api-bfckdag2aydtegc2.southindia-01.azurewebsites.net/api/admin/units_meta/',
+                        {
+                            headers: {
+                                accept: 'application/json',
+                                Authorization:
+                                    'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJmcmVzaCI6dHJ1ZSwiaWF0IjoxNzY2Mzg1NTA4LCJqdGkiOiI5NWU3MWQzMi03YzAxLTQ4ZmYtYjJjNi0zZTlmNzE5ZWI4YzUiLCJ0eXBlIjoiYWNjZXNzIiwic3ViIjoiSU5URVJOQUwiLCJuYmYiOjE3NjYzODU1MDgsImV4cCI6MTgyNjg2NTUwOCwidXNlcklkIjoiSU5URVJOQUxfREVGQVVMVF92YXJ1biIsImVtYWlsIjoidmFydW5AYXF1YWdlbi5jb20iLCJ1c2VybmFtZSI6InZhcnVuIiwibG9naW5UeXBlIjoiQURNSU5fREVGQVVMVCIsInJvbGUiOiJ1c2VyIiwicGVybWlzc2lvbnMiOlsiU1VQRVJfVVNFUiIsIkFMRVJUUyIsIkFDQ09VTlRfU0VUVElOR1MiXX0.KCsvr3P2hacGBu0zS7JXJBPbCnBa92PcaYmT9TnOpkk',
+                                targetIndustryId: industryId,
+                                unitId: unit.unitId,
+                            },
+                        }
+                    );
+
+                    if (response.ok) {
+                        const data = await response.json();
+                        if (data.unitDetails) {
+                            const records = Array.isArray(data.unitDetails)
+                                ? data.unitDetails
+                                : [data.unitDetails];
+
+                            if (records.length > 0 && records[0].unitId) {
+                                const sheet = XLSX.utils.json_to_sheet(createSheetData(records));
+                                const sheetName = `${unit.unitName || unit.unitId}`
+                                    .substring(0, 31)
+                                    .replace(/[\\/*?:[\]]/g, '');
+
+                                XLSX.utils.book_append_sheet(workbook, sheet, sheetName);
+                                sheetCount++;
+                            }
+                        }
+                    }
+                } catch (error) {
+                    console.error(`Error fetching meta for unit ${unit.unitId}:`, error);
+                }
+            }
+
+            if (sheetCount === 0) {
+                toast({
+                    title: 'No data',
+                    description: 'No meta data found for any unit',
+                    variant: 'destructive',
+                });
+                return;
+            }
+
+            const excelBuffer = XLSX.write(workbook, {
+                bookType: 'xlsx',
+                type: 'array',
+            });
+
+            saveAs(
+                new Blob([excelBuffer], {
+                    type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                }),
+                `all_units_meta.xlsx`
+            );
+
+            toast({
+                title: 'Success',
+                description: `Downloaded meta for ${sheetCount} units`,
+            });
+        } catch (error) {
+            toast({
+                title: 'Error',
+                description: 'Failed to download units meta',
+                variant: 'destructive',
+            });
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
     return (
         <Card className="w-full">
             <CardHeader>
-                <CardTitle>Units Meta Management</CardTitle>
-                <CardDescription>
-                    Manage detailed metadata for units - view and edit unit meta
-                    information
-                </CardDescription>
+                <div className='flex items-start justify-between'>
+                    <div>
+                        <CardTitle>Units Meta Management</CardTitle>
+                        <CardDescription>
+                            Manage detailed metadata for units - view and edit unit meta
+                            information
+                        </CardDescription>
+                    </div>
+
+                    {/* Download Buttons */}
+                    <div className='flex gap-3'>
+                        <Button
+                            variant='outline'
+                            onClick={downloadSelectedUnit}
+                            disabled={isLoading || !selectedUnitId || unitMetaRecords.length === 0}
+                        >
+                            <Download className='h-4 w-4 mr-2' />
+                            Download Selected Unit
+                        </Button>
+                        <Button
+                            variant='outline'
+                            onClick={downloadAllUnits}
+                            disabled={isLoading || units.length === 0}
+                        >
+                            <Download className='h-4 w-4 mr-2' />
+                            Download All Units
+                        </Button>
+                    </div>
+                </div>
             </CardHeader>
             <CardContent className='space-y-6'>
                 <SearchableUnitSelect
